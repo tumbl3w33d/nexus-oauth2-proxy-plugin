@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.github.tumbl3w33d</groupId>
+    <artifactId>nexus-oauth2-proxy-plugin</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <name>${project.groupId}:${project.artifactId}</name>
+
+    <url>https://github.com/tumbl3w33d/nexus-oauth2-proxy-plugin</url>
+    <description>
+        This plugin adds a OAuth2 proxy realm to Sonatype Nexus OSS and enables you
+        to authenticate with users of your OIDC identity provider and authorize depending
+        on their OIDC scopes.
+    </description>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <nexus.version>3.67.0-03</nexus.version>
+        <apache-httpclient.version>4.5.14</apache-httpclient.version>
+        <sonatype-goodies.version>2.3.9</sonatype-goodies.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.karaf.tooling</groupId>
+                <artifactId>karaf-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-plugin-api</artifactId>
+            <scope>provided</scope>
+            <version>${nexus.version}</version>
+            <exclusions>
+                <!-- To get rid of the error:
+                Use Import/Export Package directive -split-package:=(merge-first|merge-last|error|first) to get rid
+                of this warning
+                Package found in   [Jar:jakarta.activation, Jar:activation]
+                -->
+                <exclusion>
+                    <groupId>javax.activation</groupId>
+                    <artifactId>activation</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-capability</artifactId>
+            <scope>provided</scope>
+            <version>${nexus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <scope>provided</scope>
+            <version>${apache-httpclient.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.sonatype.goodies</groupId>
+            <artifactId>goodies-testsupport</artifactId>
+            <scope>test</scope>
+            <version>${sonatype-goodies.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>3.2.29</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>
