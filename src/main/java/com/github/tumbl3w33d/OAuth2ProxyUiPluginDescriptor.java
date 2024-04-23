@@ -6,6 +6,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
 
+// new non-extjs descriptor seems to be
+// org.sonatype.nexus.ui.UiPluginDescriptor
+
 @Named
 @Singleton
 @Priority(Integer.MAX_VALUE - 200)
