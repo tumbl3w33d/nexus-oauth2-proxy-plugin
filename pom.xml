@@ -19,7 +19,7 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <nexus.version>3.67.0-03</nexus.version>
+        <nexus.version>3.67.1-01</nexus.version>
         <apache-httpclient.version>4.5.14</apache-httpclient.version>
         <sonatype-goodies.version>2.3.9</sonatype-goodies.version>
     </properties>
@@ -29,6 +29,13 @@
             <plugin>
                 <groupId>org.apache.karaf.tooling</groupId>
                 <artifactId>karaf-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.nexus.buildsupport</groupId>
+                <artifactId>extjs-maven-plugin</artifactId>
+                <configuration>
+                    <namespace>NX.oauth2proxy</namespace>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -59,6 +66,7 @@
             <scope>provided</scope>
             <version>${nexus.version}</version>
         </dependency>
+        
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -76,6 +84,19 @@
             <artifactId>orientdb-core</artifactId>
             <version>3.2.29</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- UI plugin part -->
+        <dependency>
+            <groupId>org.sonatype.nexus.buildsupport</groupId>
+            <artifactId>extjs-maven-plugin</artifactId>
+            <version>${nexus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-rapture</artifactId>
+            <scope>provided</scope>
+            <version>${nexus.version}</version>
         </dependency>
     </dependencies>
 
