@@ -66,7 +66,7 @@ public class OAuth2ProxyHeaderAuthTokenFactory extends HttpHeaderAuthenticationT
                 token.preferred_username = new HttpHeaderAuthenticationToken(X_FORWARDED_PREFERRED_USERNAME,
                                 xForwardedPrefUsernameHeader, request.getRemoteHost());
 
-                // depending on oauth2 proxy config, this might be missing
+                // (unused) depending on oauth2 proxy config, this might be missing
                 String accessToken = httpRequest.getHeader(X_FORWARDED_ACCESS_TOKEN);
                 if (accessToken != null && !accessToken.isEmpty()) {
                         token.accessToken = new HttpHeaderAuthenticationToken(X_FORWARDED_ACCESS_TOKEN,

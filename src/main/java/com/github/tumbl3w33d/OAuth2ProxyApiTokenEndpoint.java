@@ -16,9 +16,14 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.apache.shiro.authz.annotation.RequiresUser;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
+import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.rest.Resource;
 
 import static java.util.stream.Collectors.toList;
@@ -29,50 +34,54 @@ import static org.sonatype.nexus.security.anonymous.AnonymousHelper.getAuthentic
 @Singleton
 @Consumes(MediaType.TEXT_PLAIN)
 @Path("/oauth2-proxy-api-token")
-public class OAuth2ProxyApiTokenEndpoint implements Resource {
+public class OAuth2ProxyApiTokenEndpoint extends ComponentSupport implements Resource {
 
     private static final Logger logger = LoggerFactory.getLogger(OAuth2ProxyApiTokenEndpoint.class);
 
-    private static final String ALLOWED_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    
 
-    private final RealmManager realmManager;
+    private final SecuritySystem securitySystem;
 
-    private final List<String> authenticationRealms;
+    private final UserManager nexusAuthenticatingRealm;
 
     @Inject
     public OAuth2ProxyApiTokenEndpoint(
-            final RealmManager realmManager,
-            List<UserManager> userManagers) {
-        this.realmManager = checkNotNull(realmManager);
+            final List<UserManager> userManagers,
+            final SecuritySystem securitySystem) {
+        this.securitySystem = checkNotNull(securitySystem);
         checkNotNull(userManagers);
-        authenticationRealms = getAuthenticationRealms(userManagers);
+
+        this.nexusAuthenticatingRealm = userManagers.stream()
+                .filter(um -> um.getAuthenticationRealmName() == "NexusAuthenticatingRealm")
+                .findFirst().get();
     }
 
-    public static String generateRandomString(int length) {
-        Random random = new Random();
-        StringBuilder sb = new StringBuilder(length);
-
-        for (int i = 0; i < length; i++) {
-            int randomIndex = random.nextInt(ALLOWED_CHARACTERS.length());
-            char randomChar = ALLOWED_CHARACTERS.charAt(randomIndex);
-            sb.append(randomChar);
+    private User getCurrentUser() throws UserNotFoundException {
+        User user = securitySystem.currentUser();
+        if (user != null) {
+            return user;
+        } else {
+            throw new UserNotFoundException("Unable to get current user");
         }
-
-        return sb.toString();
     }
 
     @POST
     @Path("/reset-token")
-    // @RequiresPermissions("nexus:settings:read")
+    @RequiresAuthentication
+    @RequiresUser
     @Produces(MediaType.TEXT_PLAIN)
     public String resetToken() {
-        /*
-         * return realmManager.getAvailableRealms(true).stream()
-         * .filter(securityRealm ->
-         * authenticationRealms.contains(securityRealm.getId()))
-         * .collect(toList());
-         */
-        String generatedToken = generateRandomString(32);
+        String generatedToken = OAuth2ProxyRealm.generateSecureRandomString(32);
+
+        try {
+            User user = getCurrentUser();
+            nexusAuthenticatingRealm.changePassword(user.getUserId(), generatedToken);
+            logger.debug("user {} reset their api token", user.getUserId());
+
+        } catch (UserNotFoundException e) {
+            logger.error("user not found for token reset");
+        }
+
         return generatedToken;
     }
 }

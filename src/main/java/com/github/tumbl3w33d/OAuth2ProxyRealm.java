@@ -46,6 +46,8 @@ public class OAuth2ProxyRealm extends /* AuthorizingRealm */ AuthenticatingRealm
 
     private static final String IDP_GROUP_PREFIX = "oa2-";
 
+    private static final String ALLOWED_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
     @SuppressWarnings("unused")
     private final RealmManager realmManager;
 
@@ -121,15 +123,6 @@ public class OAuth2ProxyRealm extends /* AuthorizingRealm */ AuthenticatingRealm
                     userWithPrincipals.principals,
                     userWithPrincipals.principals.getRealmNames());
 
-            /*
-             * // make oauth2 proxy the primary one, but keep all the found ones too
-             * final SimplePrincipalCollection principalCollection = new
-             * SimplePrincipalCollection(
-             * oauth2Token.getPrincipal(), getName());
-             * 
-             * principalCollection.addAll(principals);
-             */
-
             return new SimpleAuthenticationInfo(userWithPrincipals.principals, null);
         }
 
@@ -157,7 +150,7 @@ public class OAuth2ProxyRealm extends /* AuthorizingRealm */ AuthenticatingRealm
         newUser.setSource(NAME);
         newUser.setReadOnly(true);
         newUser.setStatus(UserStatus.active);
-        nexusAuthenticatingRealm.addUser(newUser, generatePassword());
+        nexusAuthenticatingRealm.addUser(newUser, generateSecureRandomString(32));
 
         userWithPrincipals.user = newUser;
         userWithPrincipals.addPrincipal(newUser.getUserId(),
@@ -240,11 +233,17 @@ public class OAuth2ProxyRealm extends /* AuthorizingRealm */ AuthenticatingRealm
         }
     }
 
-    public String generatePassword() {
+    public static String generateSecureRandomString(int length) {
         SecureRandom random = new SecureRandom();
-        byte[] bytes = new byte[48]; // 64 characters after Base64 encoding
-        random.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        StringBuilder sb = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            int randomIndex = random.nextInt(ALLOWED_CHARACTERS.length());
+            char randomChar = ALLOWED_CHARACTERS.charAt(randomIndex);
+            sb.append(randomChar);
+        }
+
+        return sb.toString();
     }
 
     private static final class UserWithPrincipals {

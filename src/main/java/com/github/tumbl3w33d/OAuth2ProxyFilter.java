@@ -41,11 +41,10 @@ public class OAuth2ProxyFilter extends NexusAuthenticationFilter {
 
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
-        // If it's a login attempt, try to execute the login.
         if (isLoginAttempt(request, response)) {
             return executeLogin(request, response);
         }
-        // If it's not a login attempt, we deny access
+
         return false;
     }
 }
