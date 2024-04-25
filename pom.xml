@@ -86,6 +86,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-rest</artifactId>
+            <version>${nexus.version}</version>
+        </dependency>
+
         <!-- UI plugin part -->
         <dependency>
             <groupId>org.sonatype.nexus.buildsupport</groupId>
