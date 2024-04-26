@@ -5,7 +5,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
     mode: 'production',
-    entry: './src/components/RedirectComponent.jsx',
+    entry: './src/components/OAuth2ProxyApiTokenComponent.jsx',
     output: {
         path: path.resolve(__dirname, '../../target/classes/static/rapture/'),
         filename: 'bundle.js',
@@ -27,7 +27,7 @@ module.exports = {
 const { merge } = require('webpack-merge');
 const commonConfig = {
     entry: {
-        'nexus-oauth2-proxy-plugin': './src/components/RedirectComponent.jsx'
+        'nexus-oauth2-proxy-plugin': './src/components/OAuth2ProxyApiTokenComponent.jsx'
     },
     output: {
         filename: '[name].js',

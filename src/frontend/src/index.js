@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import RedirectComponent from './components/RedirectComponent';
+import OAuth2ProxyApiTokenComponent from './components/OAuth2ProxyApiTokenComponent';
 
 ReactDOM.render(
-    <RedirectComponent />
+    <OAuth2ProxyApiTokenComponent />
 );

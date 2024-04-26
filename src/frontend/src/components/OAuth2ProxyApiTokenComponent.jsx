@@ -2,7 +2,7 @@ import Axios from 'axios';
 import React from 'react';
 
 
-function RedirectComponent() {
+function OAuth2ProxyApiTokenComponent() {
     const [token, setToken] = React.useState('');
     const [error, setError] = React.useState(false);
 
@@ -27,7 +27,7 @@ function RedirectComponent() {
 
 if (typeof window !== 'undefined') {
     window.ReactComponents = window.ReactComponents || {};
-    window.ReactComponents.RedirectComponent = RedirectComponent;
+    window.ReactComponents.OAuth2ProxyApiTokenComponent = OAuth2ProxyApiTokenComponent;
 }
 
-export default RedirectComponent;
+export default OAuth2ProxyApiTokenComponent;
