@@ -61,8 +61,10 @@ const commonConfig = {
         })
     ],
     externals: {
-        'react': 'react', // nexus exposes react in this global var
-        'react-dom': 'ReactDOM'
+        // nexus provides a few dependencies in these global vars
+        'react': 'react',
+        'react-dom': 'ReactDOM',
+        '@sonatype/nexus-ui-plugin': 'nxrmUiPlugin',
     },
     resolve: {
         extensions: ['.js', '.jsx']
