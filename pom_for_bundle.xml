@@ -169,6 +169,11 @@
             <artifactId>orientdb-core</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-orient</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- UI plugin part -->
         <dependency>

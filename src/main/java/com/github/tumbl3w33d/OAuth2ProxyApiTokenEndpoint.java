@@ -1,7 +1,8 @@
 package com.github.tumbl3w33d;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.List;
-import java.util.Random;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -11,24 +12,17 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
-import org.sonatype.nexus.rest.Resource;
-
-import static java.util.stream.Collectors.toList;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.security.anonymous.AnonymousHelper.getAuthenticationRealms;
 
 @Named
 @Singleton

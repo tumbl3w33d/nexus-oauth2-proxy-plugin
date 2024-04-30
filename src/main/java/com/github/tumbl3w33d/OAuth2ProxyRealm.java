@@ -3,7 +3,11 @@ package com.github.tumbl3w33d;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.security.SecureRandom;
-import java.util.Base64;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,19 +28,25 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.eclipse.sisu.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 @Named
 @Singleton
 @Description("OAuth2 Proxy Realm")
-public class OAuth2ProxyRealm extends /* AuthorizingRealm */ AuthenticatingRealm {
+public class OAuth2ProxyRealm extends AuthenticatingRealm {
 
     private static final String NAME = OAuth2ProxyRealm.class.getName();
 
@@ -44,23 +54,25 @@ public class OAuth2ProxyRealm extends /* AuthorizingRealm */ AuthenticatingRealm
 
     private static final String ID = "oauth2-proxy-realm";
 
-    private static final String IDP_GROUP_PREFIX = "oa2-";
+    private static final String IDP_GROUP_PREFIX = "idp-";
 
     private static final String ALLOWED_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-    @SuppressWarnings("unused")
-    private final RealmManager realmManager;
+    static final String FIELD_USER_ID = "userId";
+    static final String FIELD_LAST_LOGIN = "lastLogin";
 
     private final List<UserManager> userManagers;
     private final UserManager nexusAuthenticatingRealm;
+    private final DatabaseInstance databaseInstance;
 
     @Inject
-    public OAuth2ProxyRealm(final RealmManager realmManager, final List<UserManager> userManagers) {
-        this.realmManager = checkNotNull(realmManager);
+    public OAuth2ProxyRealm(final List<UserManager> userManagers,
+            @Named(OAuth2ProxyDatabase.NAME) DatabaseInstance databaseInstance) {
         this.userManagers = checkNotNull(userManagers);
         this.nexusAuthenticatingRealm = userManagers.stream()
                 .filter(um -> um.getAuthenticationRealmName() == "NexusAuthenticatingRealm")
                 .findFirst().get();
+        this.databaseInstance = databaseInstance;
 
         setName(ID);
 
@@ -72,7 +84,10 @@ public class OAuth2ProxyRealm extends /* AuthorizingRealm */ AuthenticatingRealm
             }
 
         });
+
+        ensureSchema();
     }
+
 
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
@@ -116,13 +131,14 @@ public class OAuth2ProxyRealm extends /* AuthorizingRealm */ AuthenticatingRealm
                 logger.trace("user {} has identity provider groups {}", userId, oauth2Token.groups);
                 syncExternalRolesForGroups(userWithPrincipals.user, oauth2Token.groups.getHeaderValue());
             }
+
         }
 
         if (userWithPrincipals.hasPrincipals()) {
             logger.debug("found principals for OAuth2 proxy user '{}': '{}' from realms '{}'", oauth2proxyUserId,
                     userWithPrincipals.principals,
                     userWithPrincipals.principals.getRealmNames());
-
+            recordLogin(oauth2proxyUserId);
             return new SimpleAuthenticationInfo(userWithPrincipals.principals, null);
         }
 
@@ -256,6 +272,71 @@ public class OAuth2ProxyRealm extends /* AuthorizingRealm */ AuthenticatingRealm
 
         void addPrincipal(String userId, String authRealmName) {
             this.principals.add(userId, authRealmName);
+        }
+    }
+
+    public void ensureSchema() {
+        try (ODatabaseDocumentTx db = databaseInstance.acquire()) {
+
+            OSchema schema = db.getMetadata().getSchema();
+            if (!schema.existsClass("OAUTH2PROXYUSERLOGIN")) {
+                OClass oAuth2ProxyUserLogin = schema.createClass("OAUTH2PROXYUSERLOGIN");
+                oAuth2ProxyUserLogin.createProperty(FIELD_USER_ID, OType.STRING).setNotNull(true);
+                oAuth2ProxyUserLogin.createProperty(FIELD_LAST_LOGIN, OType.DATETIME)
+                        .setNotNull(true);
+            }
+            logger.info("created schema class for OAuth2ProxyUserLogin");
+        } catch (Exception e) {
+            logger.error("Failed to ensure schema for OAuth2ProxyUserLogin");
+        }
+    }
+
+    private void recordLogin(String userId) {
+        try (ODatabaseDocumentTx db = databaseInstance.acquire()) {
+            db.begin();
+
+            List<ODocument> userLogins = db.query(new OSQLSynchQuery<ODocument>(
+                    "select from OAuth2ProxyUserLogin where " + FIELD_USER_ID + " = ?", 1),
+                    userId);
+
+            ODocument userLogin;
+
+            boolean shouldUpdate = false;
+
+            if (userLogins.isEmpty()) {
+                logger.debug("No login recorded for {} yet", userId);
+                userLogin = new ODocument("OAuth2ProxyUserLogin").field(FIELD_USER_ID, userId);
+                shouldUpdate = true;
+            } else {
+                userLogin = userLogins.get(0);
+                Date lastLoginDate = userLogin.field(FIELD_LAST_LOGIN);
+                LocalDate lastLoginLocalDate = lastLoginDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate nowLocalDate = LocalDate.now();
+
+                if (!lastLoginLocalDate.equals(nowLocalDate)) {
+                    logger.info("Last known login for {} was {}", userId, formatDateString(lastLoginDate));
+                    shouldUpdate = true;
+                }
+            }
+
+            if (shouldUpdate) {
+                userLogin.field(FIELD_LAST_LOGIN, new Date()); // Use current date
+                userLogin.save();
+                db.commit();
+            }
+
+        } catch (Exception e) {
+            logger.error("Failed to persist login timestamp for user {} - {}", userId, e);
+        }
+    }
+
+    private String formatDateString(Date date) {
+        if (date != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDateTime localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            return localDateTime.format(formatter);
+        } else {
+            return "unknown";
         }
     }
 }

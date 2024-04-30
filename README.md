@@ -24,8 +24,8 @@ The plugin currently encompasses the essential components required for operation
 * group/scope to role sync
   * if you configure OAuth2 Proxy with the well-known `groups` claim, it will retrieve that information from the identity provider
   * the groups received in the related header will be mapped to roles that you need to (manually) create in Nexus
-  * be aware that, in order to distinguish between role mappings connected with this realm and others, all groups will be prefixed with `oa2-`, so name your roles accordingly and the user will magically receive/lose them on every login
-  * Example: idp group `devs@example.com` will map to `oa2-devs@example.com` role in Nexus
+  * be aware that, in order to distinguish between role mappings connected with this realm and others, all groups will be prefixed with `idp-`, so name your roles accordingly and the user will magically receive/lose them on every login
+  * Example: idp group `devs@example.com` will map to `idp-devs@example.com` role in Nexus
 * is non-operative, a common limitation with header-based authentication methods
   * logout from identity provider and/or delete the OAuth2 Proxy cookie if you must logout for some reason
 

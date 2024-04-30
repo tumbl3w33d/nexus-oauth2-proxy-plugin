@@ -85,6 +85,11 @@
             <version>3.2.29</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-orient</artifactId>
+            <version>${nexus.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.sonatype.nexus</groupId>
