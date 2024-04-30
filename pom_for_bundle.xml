@@ -175,6 +175,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-scheduling</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- UI plugin part -->
         <dependency>
             <groupId>org.sonatype.nexus.buildsupport</groupId>

@@ -97,6 +97,12 @@
             <version>${nexus.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-scheduling</artifactId>
+            <version>${nexus.version}</version>
+        </dependency>
+
         <!-- UI plugin part -->
         <dependency>
             <groupId>org.sonatype.nexus.buildsupport</groupId>

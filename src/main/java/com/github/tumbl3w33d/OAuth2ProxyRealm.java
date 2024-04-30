@@ -58,6 +58,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
 
     private static final String ALLOWED_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
+    static final String CLASS_USER_LOGIN = "OAuth2ProxyUserLogin";
     static final String FIELD_USER_ID = "userId";
     static final String FIELD_LAST_LOGIN = "lastLogin";
 
@@ -85,7 +86,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
 
         });
 
-        ensureSchema();
+        ensureUserLoginTimestampSchema(databaseInstance, logger);
     }
 
 
@@ -275,19 +276,20 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
         }
     }
 
-    public void ensureSchema() {
-        try (ODatabaseDocumentTx db = databaseInstance.acquire()) {
+    public static void ensureUserLoginTimestampSchema(DatabaseInstance dbInstance, Logger logger) {
+        try (ODatabaseDocumentTx db = dbInstance.acquire()) {
 
             OSchema schema = db.getMetadata().getSchema();
-            if (!schema.existsClass("OAUTH2PROXYUSERLOGIN")) {
-                OClass oAuth2ProxyUserLogin = schema.createClass("OAUTH2PROXYUSERLOGIN");
+            final String className = CLASS_USER_LOGIN.toUpperCase();
+            if (!schema.existsClass(className)) {
+                OClass oAuth2ProxyUserLogin = schema.createClass(className);
                 oAuth2ProxyUserLogin.createProperty(FIELD_USER_ID, OType.STRING).setNotNull(true);
                 oAuth2ProxyUserLogin.createProperty(FIELD_LAST_LOGIN, OType.DATETIME)
                         .setNotNull(true);
             }
-            logger.info("created schema class for OAuth2ProxyUserLogin");
+            logger.info("created schema class for " + CLASS_USER_LOGIN);
         } catch (Exception e) {
-            logger.error("Failed to ensure schema for OAuth2ProxyUserLogin");
+            logger.error("Failed to ensure schema for " + CLASS_USER_LOGIN);
         }
     }
 
@@ -296,7 +298,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
             db.begin();
 
             List<ODocument> userLogins = db.query(new OSQLSynchQuery<ODocument>(
-                    "select from OAuth2ProxyUserLogin where " + FIELD_USER_ID + " = ?", 1),
+                    "select from " + CLASS_USER_LOGIN + " where " + FIELD_USER_ID + " = ?", 1),
                     userId);
 
             ODocument userLogin;
@@ -305,7 +307,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
 
             if (userLogins.isEmpty()) {
                 logger.debug("No login recorded for {} yet", userId);
-                userLogin = new ODocument("OAuth2ProxyUserLogin").field(FIELD_USER_ID, userId);
+                userLogin = new ODocument(CLASS_USER_LOGIN).field(FIELD_USER_ID, userId);
                 shouldUpdate = true;
             } else {
                 userLogin = userLogins.get(0);
@@ -330,7 +332,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
         }
     }
 
-    private String formatDateString(Date date) {
+    static String formatDateString(Date date) {
         if (date != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             LocalDateTime localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
