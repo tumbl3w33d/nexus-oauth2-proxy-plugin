@@ -26,8 +26,11 @@ The plugin currently encompasses the essential components required for operation
   * the groups received in the related header will be mapped to roles that you need to (manually) create in Nexus
   * be aware that, in order to distinguish between role mappings connected with this realm and others, all groups will be prefixed with `idp-`, so name your roles accordingly and the user will magically receive/lose them on every login
   * Example: idp group `devs@example.com` will map to `idp-devs@example.com` role in Nexus
-* is non-operative, a common limitation with header-based authentication methods
-  * logout from identity provider and/or delete the OAuth2 Proxy cookie if you must logout for some reason
+* automatic expiry of API tokens
+  * there is a configurable task that lets API tokens expire, so another interactive login by the user is necessary to renew it
+  * as long as the user keeps showing up regularly, their token will not expire
+
+**Note**: After authenticating with this realm, the logout button is non-operative, which is a common limitation with header-based authentication methods. To force a logout, you need to logout from your identity provider and/or delete the OAuth2 Proxy cookie if you must logout for some reason.
 
 ## Necessary infrastructure
 
@@ -43,10 +46,13 @@ frontend you-name-it
   # just illustrating that you must ensure TLS
   bind *:443 ssl crt /usr/local/etc/haproxy/cert alpn h2,http/1.1
 
+  # if this is too invasive for your use case, be more specific
+  http-request del-header ^X-Forwarded.*
+
   # circumvent oauth2 proxy for programmatic access
   acl is_basic_auth hdr_beg(Authorization) -i basic
   use_backend nexus if is_basic_auth
-  
+
   default_backend oauth2-proxy
 
 
