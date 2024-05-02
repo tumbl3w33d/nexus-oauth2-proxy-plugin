@@ -19,13 +19,14 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
 @ManagedLifecycle(phase = TASKS)
 @Singleton
 public class OAuth2ProxyApiTokenInvalidateQuartz extends StateGuardLifecycleSupport {
+
     private final TaskScheduler taskScheduler;
 
     private final String taskCron;
 
     @Inject
     public OAuth2ProxyApiTokenInvalidateQuartz(final TaskScheduler taskScheduler,
-            @Named("${nexus.tasks.oauth2-proxy.api-token-invalidate.cron:-0 */5 * * * ?}") final String taskCron) {
+            @Named("${nexus.tasks.oauth2-proxy.api-token-invalidate.cron:-0 0 0 * * ?}") final String taskCron) {
         this.taskScheduler = checkNotNull(taskScheduler);
         this.taskCron = checkNotNull(taskCron);
     }

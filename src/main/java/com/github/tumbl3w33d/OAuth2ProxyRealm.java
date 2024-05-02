@@ -287,7 +287,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
                 oAuth2ProxyUserLogin.createProperty(FIELD_LAST_LOGIN, OType.DATETIME)
                         .setNotNull(true);
             }
-            logger.info("created schema class for " + CLASS_USER_LOGIN);
+            logger.info("Ensured schema class exists for " + CLASS_USER_LOGIN);
         } catch (Exception e) {
             logger.error("Failed to ensure schema for " + CLASS_USER_LOGIN);
         }
