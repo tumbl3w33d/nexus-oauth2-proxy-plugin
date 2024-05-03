@@ -1,8 +1,11 @@
-name: Java CI with Maven and Release
+name: Build and tag-based release
 
 on:
   push:
     branches: [ "main" ]
+  create:
+    tags:
+      - '*'
 
 jobs:
   build:
@@ -32,18 +35,18 @@ jobs:
   prepare_release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'create' && startsWith(github.ref, 'refs/tags/')
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - uses: actions/checkout@v3
       
-      - name: Generate tag and release name
+      - name: Extract tag name
         run: |
-          TAG_NAME=$(date +'%Y%m%d%H%M%S')-$(git rev-parse --short HEAD)
-          echo "TAG_NAME=${TAG_NAME// /_}" >> $GITHUB_ENV
-          RELEASE_NAME="Release $(date +'%Y-%m-%d %H:%M:%S')"
-          echo "RELEASE_NAME=${RELEASE_NAME// /_}" >> $GITHUB_ENV
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          RELEASE_NAME="Release $TAG_NAME"
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
       
       - name: Create Release
         id: create_release
