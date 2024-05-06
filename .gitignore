@@ -1,36 +1,6 @@
-# Eclipse
-.classpath
+#.classpath // we need this because when auto generated some entries are missing
+.factorypath
 .project
-.settings/
-
-# Maven
-target/
-*.ser
-*.ec
-
-# Intellij
-*.ipr
-*.iml
-*.iws
-.idea/
-
-# Other
-.DS_Store
-.clover
-build.log
-atlassian-ide-plugin.xml
-components/nexus-core/groovy-classes/
-components/nexus-ui-plugin/dist/
-dependency-reduced-pom.xml
-node_modules/
-out
-bin/
-
-# Zion
-.zion/
-variables.properties
-
-# Yarn cache
-.yarn/cache/
-.yarn/install-state.gz
-
+.settings
+node_modules
+target

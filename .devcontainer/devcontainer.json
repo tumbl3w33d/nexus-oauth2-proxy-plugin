@@ -1,0 +1,32 @@
+{
+    "name": "Java",
+	"image": "mcr.microsoft.com/devcontainers/base:debian",
+    "initializeCommand": "docker pull mcr.microsoft.com/devcontainers/base:debian",
+    "features": {
+        "ghcr.io/devcontainers/features/java:1": {
+            "version": "21",
+            "jdkDistro": "tem",
+            "installMaven": "true",
+            "installGradle": "false"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "java.compile.nullAnalysis.mode": "automatic",
+                "java.configuration.updateBuildConfiguration": "automatic",
+                "java.configuration.runtimes": [
+                    {
+                        "name": "JavaSE-21",
+                        "path": "/usr/local/sdkman/candidates/java/current"
+                    }
+                ],
+                "java.jdt.ls.java.home": "/usr/local/sdkman/candidates/java/current",
+                "telemetry.enableTelemetry": false
+            },
+            "extensions": [
+                "vscjava.vscode-java-pack"
+            ]
+        }
+    }
+}

@@ -1,4 +1,3 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive",
-    "java.compile.nullAnalysis.mode": "automatic"
+    "ansible.python.interpreterPath": "/usr/local/bin/python3"
 }
