@@ -23,17 +23,6 @@
         on their OIDC scopes.
     </description>
 
-<<<<<<< Updated upstream
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <nexus.version>3.67.1-01</nexus.version>
-        <apache-httpclient.version>4.5.14</apache-httpclient.version>
-        <sonatype-goodies.version>2.3.9</sonatype-goodies.version>
-    </properties>
-
-=======
->>>>>>> Stashed changes
     <build>
         <plugins>
             <plugin>
@@ -41,27 +30,22 @@
                 <artifactId>karaf-maven-plugin</artifactId>
             </plugin>
             <plugin>
-<<<<<<< Updated upstream
-                <groupId>org.sonatype.nexus.buildsupport</groupId>
-                <artifactId>extjs-maven-plugin</artifactId>
-=======
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
->>>>>>> Stashed changes
                 <configuration>
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>11</source>
-					<target>11</target>
-				</configuration>
-			</plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -87,48 +71,20 @@
             <artifactId>nexus-capability</artifactId>
             <scope>provided</scope>
         </dependency>
-<<<<<<< Updated upstream
-        
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <scope>provided</scope>
-            <version>${apache-httpclient.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.sonatype.goodies</groupId>
-            <artifactId>goodies-testsupport</artifactId>
-            <scope>test</scope>
-            <version>${sonatype-goodies.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-core</artifactId>
-            <version>3.2.29</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.sonatype.nexus</groupId>
-            <artifactId>nexus-orient</artifactId>
-            <version>${nexus.version}</version>
-        </dependency>
-
-=======
->>>>>>> Stashed changes
         <dependency>
             <groupId>org.sonatype.nexus</groupId>
             <artifactId>nexus-rest</artifactId>
         </dependency>
-<<<<<<< Updated upstream
-
         <dependency>
             <groupId>org.sonatype.nexus</groupId>
-            <artifactId>nexus-scheduling</artifactId>
-            <version>${nexus.version}</version>
+            <artifactId>nexus-orient</artifactId>
+            <scope>provided</scope>
         </dependency>
-
-=======
->>>>>>> Stashed changes
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!-- UI plugin part -->
         <dependency>
             <groupId>org.sonatype.nexus</groupId>
@@ -138,11 +94,6 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-core</artifactId>
             <scope>provided</scope>
         </dependency>
     </dependencies>
