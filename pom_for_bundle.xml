@@ -6,7 +6,7 @@
 
     <groupId>com.github.tumbl3w33d</groupId>
     <artifactId>nexus-oauth2-proxy-plugin</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1-SNAPSHOT</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <packaging>bundle</packaging>
 
