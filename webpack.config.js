@@ -25,8 +25,9 @@ module.exports = {
         ]
     },
     externals: {
-        react: 'react',
-        axios: 'axios'
+        '@sonatype/nexus-ui-plugin': 'nxrmUiPlugin',
+        axios: 'axios',
+        react: 'react'
     },
     resolve: {
         extensions: ['.js', '.jsx']
