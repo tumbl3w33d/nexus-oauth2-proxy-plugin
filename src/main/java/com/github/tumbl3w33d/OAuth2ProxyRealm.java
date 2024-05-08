@@ -109,19 +109,19 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
 
         UserWithPrincipals userWithPrincipals = findUserById(oauth2proxyUserId);
 
-        try {
-            if (!userWithPrincipals.hasPrincipals()) {
-                logger.debug("need to create a new user object for {}", oauth2proxyUserId);
+        if (!userWithPrincipals.hasPrincipals()) {
+            logger.debug("need to create a new user object for {}", oauth2proxyUserId);
+            try {
                 createUser(preferred_username, email, userWithPrincipals);
                 logger.info("created new user object for {}", oauth2proxyUserId);
-            }
-        } catch (ORecordDuplicatedException e) {
-            logger.debug(
-                    "ignoring duplicate record exception, probably caused by concurrent requests creating new user object");
+            } catch (ORecordDuplicatedException e) {
+                logger.debug(
+                        "ignoring duplicate record exception, probably caused by concurrent requests creating new user object");
 
-            userWithPrincipals = findUserById(oauth2proxyUserId);
-        } catch (Exception e) {
-            logger.error("unexpected error on user creation: {}", e);
+                userWithPrincipals = findUserById(oauth2proxyUserId);
+            } catch (Exception e) {
+                logger.error("unexpected error on user creation: {}", e);
+            }
         }
 
         if (userWithPrincipals.user != null) {

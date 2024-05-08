@@ -11,7 +11,7 @@ import {
     SectionFooter
 } from '@sonatype/nexus-ui-plugin';
 
-function OAuth2ProxyApiTokenComponent() {
+export default function OAuth2ProxyApiTokenComponent() {
     const [token, setToken] = React.useState('');
     const [error, setError] = React.useState(false);
 
@@ -31,7 +31,6 @@ function OAuth2ProxyApiTokenComponent() {
         return <div>Error fetching user data.</div>;
     }
 
-
     return <Page>
         <PageHeader>
             <PageTitle icon={faKey} text="OAuth2 Proxy API Token" description="Access your API token for non-interactive access"></PageTitle>
@@ -46,10 +45,3 @@ function OAuth2ProxyApiTokenComponent() {
         </ContentBody>
     </Page >
 }
-
-if (typeof window !== 'undefined') {
-    window.ReactComponents = window.ReactComponents || {};
-    window.ReactComponents.OAuth2ProxyApiTokenComponent = OAuth2ProxyApiTokenComponent;
-}
-
-export default OAuth2ProxyApiTokenComponent;

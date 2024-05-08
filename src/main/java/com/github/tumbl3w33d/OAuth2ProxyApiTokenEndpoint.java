@@ -32,8 +32,6 @@ public class OAuth2ProxyApiTokenEndpoint extends ComponentSupport implements Res
 
     private static final Logger logger = LoggerFactory.getLogger(OAuth2ProxyApiTokenEndpoint.class);
 
-    
-
     private final SecuritySystem securitySystem;
 
     private final UserManager nexusAuthenticatingRealm;
@@ -52,11 +50,10 @@ public class OAuth2ProxyApiTokenEndpoint extends ComponentSupport implements Res
 
     private User getCurrentUser() throws UserNotFoundException {
         User user = securitySystem.currentUser();
-        if (user != null) {
-            return user;
-        } else {
+        if (user == null) {
             throw new UserNotFoundException("Unable to get current user");
         }
+        return user;
     }
 
     @POST

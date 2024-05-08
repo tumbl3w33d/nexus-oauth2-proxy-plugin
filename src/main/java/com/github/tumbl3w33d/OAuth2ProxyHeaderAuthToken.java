@@ -34,5 +34,4 @@ public class OAuth2ProxyHeaderAuthToken implements HostAuthenticationToken {
     public String getHost() {
         return this.host;
     }
-
 }

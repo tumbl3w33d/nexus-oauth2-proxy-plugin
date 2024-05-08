@@ -1,21 +1,46 @@
 package com.github.tumbl3w33d;
 
-import javax.annotation.Priority;
+import static java.util.Arrays.asList;
+
+import java.util.Collections;
+import java.util.List;
+
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
+import org.eclipse.sisu.Priority;
+import org.eclipse.sisu.space.ClassSpace;
 
-// new non-extjs descriptor seems to be
-// org.sonatype.nexus.ui.UiPluginDescriptor
+import org.sonatype.nexus.ui.UiPluginDescriptor;
 
 @Named
 @Singleton
-@Priority(Integer.MAX_VALUE - 200)
-public class OAuth2ProxyUiPluginDescriptor extends UiPluginDescriptorSupport {
-    public OAuth2ProxyUiPluginDescriptor() {
-        super("nexus-oauth2-proxy-plugin"); // this must match the pom's artifactId
-        setNamespace("NX.oauth2proxy");
-        setConfigClassName("NX.oauth2proxy.app.PluginConfig");
+@Priority(Integer.MAX_VALUE - 300)
+public class OAuth2ProxyUiPluginDescriptor implements UiPluginDescriptor {
+
+    private final List<String> scripts;
+
+    @Inject
+    public OAuth2ProxyUiPluginDescriptor(final ClassSpace space) {
+        scripts = asList("/static/nexus-oauth2-proxy-bundle.js");
+    }
+
+    @Override
+    public String getName() {
+        return "nexus-oauth2-proxy-plugin";
+    }
+
+    @Nullable
+    @Override
+    public List<String> getScripts(final boolean isDebug) {
+      return scripts;
+    }
+
+    @Nullable
+    @Override
+    public List<String> getStyles() {
+      return Collections.emptyList();
     }
 }

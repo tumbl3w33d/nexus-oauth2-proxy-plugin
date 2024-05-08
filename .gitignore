@@ -2,6 +2,9 @@
 .factorypath
 .project
 .settings
+.vscode
+bin
 node_modules
 target
+yarn.lock
 *.versionsBackup
