@@ -15,7 +15,7 @@ export default function OAuth2ProxyApiTokenComponent() {
     const [token, setToken] = React.useState('');
     const [error, setError] = React.useState(false);
 
-    useEffect(() => {
+    React.useEffect(() => {
         (async () => {
             try {
                 const reponse = await Axios.post("/service/rest/oauth2-proxy-api-token/reset-token");
