@@ -293,7 +293,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
         }
     }
 
-    private void recordLogin(String userId) {
+    void recordLogin(String userId) {
         try (ODatabaseDocumentTx db = databaseInstance.acquire()) {
             db.begin();
 
@@ -307,7 +307,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
 
             if (userLogins.isEmpty()) {
                 logger.debug("No login recorded for {} yet", userId);
-                userLogin = new ODocument(CLASS_USER_LOGIN).field(FIELD_USER_ID, userId);
+                userLogin = createUserLoginDoc(userId);
                 shouldUpdate = true;
             } else {
                 userLogin = userLogins.get(0);
@@ -330,6 +330,10 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
         } catch (Exception e) {
             logger.error("Failed to persist login timestamp for user {} - {}", userId, e);
         }
+    }
+
+    ODocument createUserLoginDoc(String userId) {
+        return new ODocument(CLASS_USER_LOGIN).field(FIELD_USER_ID, userId);
     }
 
     static String formatDateString(Date date) {
