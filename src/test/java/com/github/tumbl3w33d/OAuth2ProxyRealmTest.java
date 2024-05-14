@@ -25,8 +25,11 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.security.role.RoleIdentifier;
+import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 
+import com.github.tumbl3w33d.OAuth2ProxyRealm.UserWithPrincipals;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -122,6 +125,38 @@ public class OAuth2ProxyRealmTest {
         Mockito.verify(docTx).commit();
     }
 
+    @Test
+    void testUserWithPrincipals() {
+        UserWithPrincipals newUser = new UserWithPrincipals();
+        assertFalse(newUser.hasPrincipals());
+
+        newUser.addPrincipal("test.user", "TestAuthRealm");
+        assertTrue(newUser.hasPrincipals());
+    }
+
+    @Test
+    void testSyncExternalRolesForGroups() {
+        User user = new User();
+        user.setUserId("test.user");
+        user.addRole(new RoleIdentifier("test", "nx-big-boss"));
+        String groups = "administrators@idm.example.com,devs@idm.example.com";
+
+        oauth2ProxyRealm.syncExternalRolesForGroups(user, groups);
+        assertTrue(user.getRoles().stream().anyMatch(
+                role -> role.getRoleId().equals(OAuth2ProxyRealm.IDP_GROUP_PREFIX + "administrators@idm.example.com")));
+        assertTrue(user.getRoles().stream().anyMatch(
+                role -> role.getRoleId().equals(OAuth2ProxyRealm.IDP_GROUP_PREFIX + "devs@idm.example.com")));
+        assertTrue(user.getRoles().stream().anyMatch(
+                role -> role.getRoleId().equals("nx-big-boss")),
+                "expected group sync to leave non-idp groups untouched");
+
+        groups = "devs@idm.example.com";
+        oauth2ProxyRealm.syncExternalRolesForGroups(user, groups);
+        assertFalse(user.getRoles().stream().anyMatch(
+                role -> role.getRoleId().equals(OAuth2ProxyRealm.IDP_GROUP_PREFIX + "administrators@idm.example.com")),
+                "idp group expected to be removed from user by group sync");
+    }
+
     @BeforeEach
     void setUp() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         oauth2ProxyRealm = getTestRealm(null);
@@ -144,5 +179,4 @@ public class OAuth2ProxyRealmTest {
         OAuth2ProxyRealm realm = new OAuth2ProxyRealm(userManagers, dbInstance);
         return realm;
     }
-
 }

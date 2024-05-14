@@ -54,7 +54,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
 
     private static final String ID = "oauth2-proxy-realm";
 
-    private static final String IDP_GROUP_PREFIX = "idp-";
+    static final String IDP_GROUP_PREFIX = "idp-";
 
     private static final String ALLOWED_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -174,7 +174,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
                 nexusAuthenticatingRealm.getAuthenticationRealmName());
     }
 
-    private void syncExternalRolesForGroups(User user, String groupsString) {
+    void syncExternalRolesForGroups(User user, String groupsString) {
         // mark idp groups with prefix to recognize them later
         Set<RoleIdentifier> idpGroups = Stream.of(groupsString.split(","))
                 .map(groupString -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, IDP_GROUP_PREFIX + groupString))
@@ -263,7 +263,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
         return sb.toString();
     }
 
-    private static final class UserWithPrincipals {
+    static final class UserWithPrincipals {
         private User user;
         private final SimplePrincipalCollection principals = new SimplePrincipalCollection();
 
