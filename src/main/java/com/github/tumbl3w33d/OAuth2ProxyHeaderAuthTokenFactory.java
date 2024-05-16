@@ -23,11 +23,11 @@ public class OAuth2ProxyHeaderAuthTokenFactory extends HttpHeaderAuthenticationT
 
     private final Logger logger = LoggerFactory.getLogger(OAuth2ProxyHeaderAuthTokenFactory.class);
 
-    private static final String X_FORWARDED_USER = "X-Forwarded-User";
-    private static final String X_FORWARDED_PREFERRED_USERNAME = "X-Forwarded-Preferred-Username";
-    private static final String X_FORWARDED_EMAIL = "X-Forwarded-Email";
-    private static final String X_FORWARDED_ACCESS_TOKEN = "X-Forwarded-Access-Token";
-    private static final String X_FORWARDED_GROUPS = "X-Forwarded-Groups";
+    static final String X_FORWARDED_USER = "X-Forwarded-User";
+    static final String X_FORWARDED_PREFERRED_USERNAME = "X-Forwarded-Preferred-Username";
+    static final String X_FORWARDED_EMAIL = "X-Forwarded-Email";
+    static final String X_FORWARDED_ACCESS_TOKEN = "X-Forwarded-Access-Token";
+    static final String X_FORWARDED_GROUPS = "X-Forwarded-Groups";
 
     static final List<String> OAUTH2_PROXY_HEADERS = Collections
             .unmodifiableList(Arrays.asList(X_FORWARDED_USER, X_FORWARDED_PREFERRED_USERNAME,
@@ -47,7 +47,7 @@ public class OAuth2ProxyHeaderAuthTokenFactory extends HttpHeaderAuthenticationT
         } else {
             if (xForwardedUserHeader == null || xForwardedEmailHeader == null
                     || xForwardedPrefUsernameHeader == null) {
-                logger.warn("required OAuth2 proxy headers incomplete - {}: {} - {}: {} - {}: {}",
+                logger.debug("required OAuth2 proxy headers incomplete - {}: {} - {}: {} - {}: {}",
                         X_FORWARDED_USER, xForwardedUserHeader,
                         X_FORWARDED_EMAIL, xForwardedEmailHeader,
                         X_FORWARDED_PREFERRED_USERNAME, xForwardedPrefUsernameHeader);
