@@ -11,14 +11,6 @@ final class OAuth2ProxyRealmCredentialsMatcher extends ComponentSupport implemen
     public boolean doCredentialsMatch(AuthenticationToken token, AuthenticationInfo info) {
         log.debug("authInfo: {}", info);
 
-        if (info != null) {
-            log.debug("authInfo credentials: {}", info.getCredentials());
-        }
-
-        if (token != null) {
-            log.debug("token credentials: {}", token.getCredentials());
-        }
-
         return true;
     }
 }
