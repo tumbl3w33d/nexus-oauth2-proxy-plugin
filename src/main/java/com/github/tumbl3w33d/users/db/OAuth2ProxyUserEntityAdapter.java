@@ -137,14 +137,18 @@ public class OAuth2ProxyUserEntityAdapter extends IterableEntityAdapter<OAuth2Pr
 
         try {
             writeFields(doc, entity);
+            log.debug("wrote fields of new user doc for {}", entity.getPreferredUsername());
         } catch (Exception e) {
             log.error("unable to write user data - {}", e);
+            return null;
         }
 
         try {
             db.save(doc);
+            log.debug("saved new user doc of {}", entity.getPreferredUsername());
         } catch (Exception e) {
             log.error("unable to save user doc: {}", e);
+            return null;
         }
 
         return doc;

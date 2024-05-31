@@ -92,7 +92,7 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
     }
 
     private boolean isApiTokenMatching(AuthenticationToken token) {
-        logger.info("token principal: {}", token.getPrincipal());
+        logger.info("token principal for matching api token: {}", token.getPrincipal());
 
         if (token.getPrincipal() instanceof String) {
             Optional<String> maybeApiToken = userManager.getApiToken((String) token.getPrincipal());
@@ -160,12 +160,11 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
             logger.debug("need to create a new user object for {}", oauth2proxyUserId);
 
             User newUserObject = OAuth2ProxyUserManager.createUserObject(preferred_username, email);
-
+            logger.debug("created preliminary user object {}", newUserObject);
             userManager.addUser(newUserObject, generateSecureRandomString(32));
-
+            logger.debug("created the user via userManager");
             userWithPrincipals.setUser(newUserObject);
             userWithPrincipals.addPrincipal(newUserObject.getUserId(), OAuth2ProxyUserManager.AUTHENTICATING_REALM);
-
             logger.info("created new user object for {}", oauth2proxyUserId);
         }
 

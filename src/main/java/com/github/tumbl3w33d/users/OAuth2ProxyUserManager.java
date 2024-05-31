@@ -138,7 +138,10 @@ public class OAuth2ProxyUserManager extends AbstractUserManager {
     @Override
     public User addUser(User user, String password) {
         OAuth2ProxyUser internalUser = OAuth2ProxyUser.of(user);
+        internalUser.setApiToken(password);
+        log.debug("converted preliminary new user to internal user object for persisting");
         userStore.addUser(internalUser);
+        log.debug("persisted new user {}", user.getUserId());
         return user;
     }
 

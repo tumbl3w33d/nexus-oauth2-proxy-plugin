@@ -112,6 +112,8 @@ public class OAuth2ProxyUserStore extends ComponentSupport {
 
         newUser.setApiToken(hashToken(newUser.getApiToken()));
 
+        log.debug("hashed API token of new user {} before persisting", newUser.getPreferredUsername());
+
         OrientTransactional.inTx(this.databaseProvider)
                 .call(db -> entityAdapter.addEntity(db, newUser));
 
@@ -159,7 +161,13 @@ public class OAuth2ProxyUserStore extends ComponentSupport {
             // should not happen because the call is internal by our implementation
             throw new RuntimeException("empty/null password passed to hash method");
         }
-        return this.passwordService.encryptPassword(plaintextToken);
+
+        try {
+            return this.passwordService.encryptPassword(plaintextToken);
+        } catch (IllegalArgumentException e) {
+            log.error("failed to hash token - {}", e);
+            throw e;
+        }
     }
 
     public boolean updateUserApiToken(String userId, String token) {
