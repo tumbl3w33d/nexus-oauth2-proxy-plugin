@@ -91,3 +91,5 @@ cookie_secret = "generate an individual cookie secret"
 # we don't need to wait for people to press the button, just redirect
 skip_provider_button = true
 ```
+
+**Note**: Depending on the amount of data the OAuth2 Proxy receives from your IDP (especially list of groups) you might want to look into [changing its session storage to redis/valkey](https://oauth2-proxy.github.io/oauth2-proxy/configuration/session_storage/#redis-storage). The proxy will warn you about data exceeding limits which results in multiple cookies being set for the proxy session.
