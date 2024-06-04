@@ -1,6 +1,7 @@
 package com.github.tumbl3w33d.users.db;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.security.role.Role;
@@ -22,6 +23,21 @@ public class OAuth2ProxyRole extends AbstractEntity implements Comparable<OAuth2
             return 1;
         }
         return getName().compareTo(o.getName());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
+        OAuth2ProxyRole other = (OAuth2ProxyRole) obj;
+        return Objects.equals(name, other.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 
     public static OAuth2ProxyRole of(RoleIdentifier nexusRole) {

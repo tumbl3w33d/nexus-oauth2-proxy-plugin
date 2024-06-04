@@ -3,6 +3,7 @@ package com.github.tumbl3w33d.users.db;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -155,4 +156,21 @@ public class OAuth2ProxyUser extends AbstractEntity implements Comparable<OAuth2
         return groups.stream().map(group -> group.getRoleId()).collect(Collectors.joining(","));
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
+        OAuth2ProxyUser other = (OAuth2ProxyUser) obj;
+        return Objects.equals(preferred_username, other.preferred_username) &&
+                Objects.equals(groups, other.groups) &&
+                Objects.equals(email, other.email) &&
+                Objects.equals(apiToken, other.apiToken);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(preferred_username, groups, email, apiToken);
+    }
 }
