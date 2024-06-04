@@ -15,8 +15,6 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.scheduling.Cancelable;
@@ -24,6 +22,7 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
+import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -34,30 +33,26 @@ public class OAuth2ProxyApiTokenInvalidateTask
         extends TaskSupport
         implements Cancelable {
 
-    private final Logger logger = LoggerFactory.getLogger(OAuth2ProxyApiTokenInvalidateTask.class.getName());
-
     private final DatabaseInstance databaseInstance;
-    private final UserManager nexusAuthenticatingRealm;
+
+    private final OAuth2ProxyUserManager userManager;
 
     @Inject
     public OAuth2ProxyApiTokenInvalidateTask(@Named(OAuth2ProxyDatabase.NAME) DatabaseInstance databaseInstance,
-            final List<UserManager> userManagers) {
+            final List<UserManager> userManagers, final OAuth2ProxyUserManager userManager) {
 
         this.databaseInstance = databaseInstance;
-
-        this.nexusAuthenticatingRealm = userManagers.stream()
-                .filter(um -> um.getAuthenticationRealmName() == "NexusAuthenticatingRealm")
-                .findFirst().get();
+        this.userManager = userManager;
 
         OAuth2ProxyRealm.ensureUserLoginTimestampSchema(databaseInstance, log);
     }
 
-    private void resetPassword(String userId) {
+    private void resetApiToken(String userId) {
         try {
-            nexusAuthenticatingRealm.changePassword(userId, generateSecureRandomString(32));
-            logger.debug("Password reset for user {} succeeded", userId);
+            userManager.changePassword(userId, generateSecureRandomString(32));
+            log.debug("API token reset for user {} succeeded", userId);
         } catch (UserNotFoundException e) {
-            logger.error("Unable to reset password of user {} - {}", userId, e);
+            log.error("Unable to reset API token of user {} - {}", userId, e);
         }
     }
 
@@ -70,7 +65,7 @@ public class OAuth2ProxyApiTokenInvalidateTask
                     "select from " + CLASS_USER_LOGIN));
 
             if (userLogins.isEmpty()) {
-                logger.debug("Nothing to do");
+                log.debug("Nothing to do");
             } else {
                 for (ODocument userLogin : userLogins) {
                     String userId = userLogin.field(FIELD_USER_ID);
@@ -79,7 +74,7 @@ public class OAuth2ProxyApiTokenInvalidateTask
                     Instant lastLoginInstant = lastLoginDate.toInstant();
                     Instant nowInstant = Instant.now();
 
-                    logger.debug("Last known login for {} was {}", userId,
+                    log.debug("Last known login for {} was {}", userId,
                             formatDateString(lastLoginDate));
 
                     long timePassed = ChronoUnit.DAYS.between(lastLoginInstant, nowInstant);
@@ -87,26 +82,24 @@ public class OAuth2ProxyApiTokenInvalidateTask
                     int configuredDuration = getConfiguration()
                             .getInteger(OAuth2ProxyApiTokenInvalidateTaskDescriptor.CONFIG_EXPIRY, 1);
 
-                    logger.debug("Time passed since login: {} - configured maximum: {}", timePassed,
+                    log.debug("Time passed since login: {} - configured maximum: {}", timePassed,
                             configuredDuration);
 
                     if (timePassed >= configuredDuration) {
-                        resetPassword(userId);
-                        logger.info(
-                                "Reset api token of user {} because they did not login via OAuth2 Proxy for a while",
-                                userId);
+                        resetApiToken(userId);
+                        log.info("Reset api token of user {} because they did not show up for a while", userId);
                     }
                 }
 
             }
         } catch (Exception e) {
-            logger.error("Failed to retrieve login timestamps - {}", e);
+            log.error("Failed to retrieve login timestamps - {}", e);
         }
         return null;
     }
 
     @Override
     public String getMessage() {
-        return "Invalidate OAuth2 Proxy API tokens of users who did not log in for a while";
+        return "Invalidate OAuth2 Proxy API tokens of users who did not show up for a while";
     }
 }

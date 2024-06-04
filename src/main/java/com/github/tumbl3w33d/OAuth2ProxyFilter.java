@@ -47,4 +47,10 @@ public class OAuth2ProxyFilter extends NexusAuthenticationFilter {
 
         return false;
     }
+
+    /* Only overriding to be able to mock it */
+    @Override
+    protected boolean executeLogin(ServletRequest request, ServletResponse response) throws Exception {
+        return super.executeLogin(request, response);
+    }
 }

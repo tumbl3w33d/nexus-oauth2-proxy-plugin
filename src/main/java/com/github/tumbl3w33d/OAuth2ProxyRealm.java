@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,39 +23,40 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
-import org.apache.shiro.authc.credential.CredentialsMatcher;
-import org.apache.shiro.realm.AuthenticatingRealm;
-import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.credential.PasswordService;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
 import org.eclipse.sisu.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
-import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
-import org.sonatype.nexus.security.user.UserStatus;
 
+import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
+import com.github.tumbl3w33d.users.OAuth2ProxyUserManager.UserWithPrincipals;
+import com.github.tumbl3w33d.users.db.OAuth2ProxyRoleStore;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
-@Named
+@Named(OAuth2ProxyRealm.NAME)
 @Singleton
-@Description("OAuth2 Proxy Realm")
-public class OAuth2ProxyRealm extends AuthenticatingRealm {
+@Description(OAuth2ProxyRealm.NAME)
+public class OAuth2ProxyRealm extends AuthorizingRealm {
 
-    private static final String NAME = OAuth2ProxyRealm.class.getName();
+    public static final String NAME = "OAuth2ProxyRealm";
 
-    private final Logger logger = LoggerFactory.getLogger(NAME);
+    final Logger logger = LoggerFactory.getLogger(OAuth2ProxyRealm.class.getName());
 
     private static final String ID = "oauth2-proxy-realm";
-
-    static final String IDP_GROUP_PREFIX = "idp-";
 
     private static final String ALLOWED_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -62,36 +64,80 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
     static final String FIELD_USER_ID = "userId";
     static final String FIELD_LAST_LOGIN = "lastLogin";
 
-    private final List<UserManager> userManagers;
-    private final UserManager nexusAuthenticatingRealm;
+    private final OAuth2ProxyUserManager userManager;
+    private final OAuth2ProxyRoleStore roleStore;
+
     private final DatabaseInstance databaseInstance;
 
+    private PasswordService passwordService;
+
     @Inject
-    public OAuth2ProxyRealm(final List<UserManager> userManagers,
-            @Named(OAuth2ProxyDatabase.NAME) DatabaseInstance databaseInstance) {
-        this.userManagers = checkNotNull(userManagers);
-        this.nexusAuthenticatingRealm = userManagers.stream()
-                .filter(um -> um.getAuthenticationRealmName() == "NexusAuthenticatingRealm")
-                .findFirst().get();
-        this.databaseInstance = databaseInstance;
+    public OAuth2ProxyRealm(
+            @Named(OAuth2ProxyDatabase.NAME) DatabaseInstance databaseInstance,
+            @Named OAuth2ProxyUserManager userManager, @Named OAuth2ProxyRoleStore roleStore,
+            @Named PasswordService passwordService) {
+        this.userManager = checkNotNull(userManager);
+        this.databaseInstance = checkNotNull(databaseInstance);
+        this.roleStore = roleStore;
+        this.passwordService = passwordService;
 
         setName(ID);
 
-        setCredentialsMatcher(new CredentialsMatcher() {
+        setCredentialsMatcher(new OAuth2ProxyRealmCredentialsMatcher());
 
-            @Override
-            public boolean doCredentialsMatch(AuthenticationToken token, AuthenticationInfo info) {
-                return true;
-            }
-
-        });
-
+        // authentication is provided by oauth2 proxy headers with every request
+        setAuthenticationCachingEnabled(false);
+        setAuthorizationCachingEnabled(false);
         ensureUserLoginTimestampSchema(databaseInstance, logger);
     }
 
+    private boolean isApiTokenMatching(AuthenticationToken token) {
+        logger.info("token principal for matching api token: {}", token.getPrincipal());
+
+        if (token.getPrincipal() instanceof String) {
+            Optional<String> maybeApiToken = userManager.getApiToken((String) token.getPrincipal());
+
+            if (!maybeApiToken.isPresent()) {
+                logger.warn(
+                        "unable to retrieve API token from database user in order to match against provided auth token secret");
+                return false;
+            }
+
+            String apiToken = maybeApiToken.get();
+
+            return passwordService.passwordsMatch(token.getCredentials(), apiToken);
+        }
+
+        logger.debug("principal received from auth token is not a string");
+
+        return false;
+    }
 
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+        logger.trace("call to doGetAuthenticationInfo with token {}", token);
+
+        if (token instanceof UsernamePasswordToken) {
+            if (isApiTokenMatching(token)) {
+                // the condition method already ensures the principal is a string
+                String userId = (String) token.getPrincipal();
+
+                logger.debug("programmatic access by {} succeeded", userId);
+
+                UserWithPrincipals userWithPrincipals = findUserById(userId);
+
+                logger.debug("found principal {} for programmatic access", userWithPrincipals);
+
+                recordLogin(userId);
+
+                return new SimpleAuthenticationInfo(userWithPrincipals.getPrincipals(), null);
+            }
+
+            logger.debug("programmatic access failed because credentials did not match");
+
+            return null;
+        }
+
         OAuth2ProxyHeaderAuthToken oauth2Token = (OAuth2ProxyHeaderAuthToken) token;
 
         String userid = oauth2Token.user.getHeaderValue();
@@ -100,7 +146,7 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
         String accessToken = oauth2Token.accessToken != null ? oauth2Token.accessToken.getHeaderValue() : null;
         String groups = oauth2Token.groups != null ? oauth2Token.groups.getHeaderValue() : null;
 
-        logger.debug(
+        logger.trace(
                 "getting authentication info - user: {} - preferred username: {} - email: {} - access token: {} - groups: {}",
                 userid, preferred_username, email, accessToken != null ? "<hidden>" : null, groups);
 
@@ -108,39 +154,42 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
         logger.debug("determined user id {}", oauth2proxyUserId);
 
         UserWithPrincipals userWithPrincipals = findUserById(oauth2proxyUserId);
+        logger.debug("found principal {} for interactive access", userWithPrincipals);
 
         if (!userWithPrincipals.hasPrincipals()) {
             logger.debug("need to create a new user object for {}", oauth2proxyUserId);
-            try {
-                createUser(preferred_username, email, userWithPrincipals);
-                logger.info("created new user object for {}", oauth2proxyUserId);
-            } catch (ORecordDuplicatedException e) {
-                logger.debug(
-                        "ignoring duplicate record exception, probably caused by concurrent requests creating new user object");
 
-                userWithPrincipals = findUserById(oauth2proxyUserId);
-            } catch (Exception e) {
-                logger.error("unexpected error on user creation: {}", e);
-            }
+            User newUserObject = OAuth2ProxyUserManager.createUserObject(preferred_username, email);
+            logger.debug("created preliminary user object {}", newUserObject);
+            userManager.addUser(newUserObject, generateSecureRandomString(32));
+            logger.debug("created the user via userManager");
+            userWithPrincipals.setUser(newUserObject);
+            userWithPrincipals.addPrincipal(newUserObject.getUserId(), OAuth2ProxyUserManager.AUTHENTICATING_REALM);
+            logger.info("created new user object for {}", oauth2proxyUserId);
         }
 
-        if (userWithPrincipals.user != null) {
-            String userId = userWithPrincipals.user.getUserId();
-            logger.debug("user {} has roles {} before sync", userId,
-                    userWithPrincipals.user.getRoles());
+        if (userWithPrincipals.hasUser()) {
+            String userId = userWithPrincipals.getUser().getUserId();
+
+            logger.debug("user {} (source {}) has roles {} before sync", userId,
+                    userWithPrincipals.getUser().getSource(),
+                    userWithPrincipals.getUser().getRoles());
+
             if (oauth2Token.groups != null) {
                 logger.trace("user {} has identity provider groups {}", userId, oauth2Token.groups);
-                syncExternalRolesForGroups(userWithPrincipals.user, oauth2Token.groups.getHeaderValue());
+                syncExternalRolesForGroups(userWithPrincipals.getUser(), oauth2Token.groups.getHeaderValue());
             }
 
         }
 
         if (userWithPrincipals.hasPrincipals()) {
             logger.debug("found principals for OAuth2 proxy user '{}': '{}' from realms '{}'", oauth2proxyUserId,
-                    userWithPrincipals.principals,
-                    userWithPrincipals.principals.getRealmNames());
+                    userWithPrincipals.getPrincipals(),
+                    userWithPrincipals.getPrincipals().getRealmNames());
+
             recordLogin(oauth2proxyUserId);
-            return new SimpleAuthenticationInfo(userWithPrincipals.principals, null);
+
+            return new SimpleAuthenticationInfo(userWithPrincipals.getPrincipals(), null);
         }
 
         logger.debug("No found principals for OAuth2 proxy user '{}'", oauth2proxyUserId);
@@ -148,93 +197,96 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
         return null;
     }
 
-    private void createUser(String preferred_username, String email,
-            UserWithPrincipals userWithPrincipals) {
+    @Override
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
 
-        User newUser = new User();
-        newUser.setUserId(preferred_username);
+        String principal = principals.getPrimaryPrincipal().toString();
 
-        // naive approach to figure out names from username
-        if (preferred_username.contains(".")) {
-            String[] name_parts = preferred_username.split("\\.");
-            String assumed_firstname = name_parts[0].substring(0, 1).toUpperCase() + name_parts[0].substring(1);
-            newUser.setFirstName(assumed_firstname);
-            String assumed_lastname = name_parts[1].substring(0, 1).toUpperCase() + name_parts[1].substring(1);
-            newUser.setLastName(assumed_lastname);
+        logger.debug("call to doGetAuthorizationInfo found primary principle {}", principal);
+
+        try {
+            User user = userManager.getUser(principal);
+
+            Set<String> roles = user.getRoles().stream().map(role -> role.getRoleId()).collect(Collectors.toSet());
+
+            logger.debug("user {} has roles {}", principal, roles);
+
+            return new SimpleAuthorizationInfo(roles);
+        } catch (UserNotFoundException e) {
+            logger.debug("unable to find user with principal {} in source {} for authorization", principal,
+                    OAuth2ProxyUserManager.SOURCE);
+
+            return null;
         }
-
-        newUser.setEmailAddress(email);
-        newUser.setSource(NAME);
-        newUser.setReadOnly(true);
-        newUser.setStatus(UserStatus.active);
-        nexusAuthenticatingRealm.addUser(newUser, generateSecureRandomString(32));
-
-        userWithPrincipals.user = newUser;
-        userWithPrincipals.addPrincipal(newUser.getUserId(),
-                nexusAuthenticatingRealm.getAuthenticationRealmName());
     }
 
     void syncExternalRolesForGroups(User user, String groupsString) {
         // mark idp groups with prefix to recognize them later
-        Set<RoleIdentifier> idpGroups = Stream.of(groupsString.split(","))
-                .map(groupString -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, IDP_GROUP_PREFIX + groupString))
+        Set<RoleIdentifier> idpGroups = Stream.of(groupsString.trim().split(","))
+                .map(groupString -> new RoleIdentifier(OAuth2ProxyUserManager.SOURCE, groupString))
                 .collect(Collectors.toSet());
 
+        roleStore.addRolesIfMissing(idpGroups);
+
         user.addAllRoles(idpGroups);
-        logger.debug("added idp groups as role to user {}: {}", user.getUserId(),
+
+        logger.trace("added idp groups as role to user {}: {}", user.getUserId(),
                 user.getRoles().stream().map(group -> group.getRoleId()).collect(Collectors.toSet()));
+
+        try {
+            userManager.updateUser(user);
+        } catch (UserNotFoundException e) {
+            logger.warn("user {} cannot be found in db for group synchronization", user.getUserId());
+            return;
+        } catch (Exception e) {
+            logger.error("unexpected error when updating user groups - {}", e);
+            return;
+        }
 
         Set<RoleIdentifier> rolesToDelete = new HashSet<>();
 
         for (RoleIdentifier role : user.getRoles()) {
-            if (!role.getRoleId().startsWith(IDP_GROUP_PREFIX)) {
+            if (!role.getSource().equals(OAuth2ProxyUserManager.SOURCE)) {
                 // not touching roles assigned outside of this realm logic
                 logger.debug("group sync leaving {}'s role {} untouched", user.getUserId(),
                         role.getRoleId(), role.getSource());
                 continue;
             }
+
             if (!idpGroups.stream().anyMatch(idpGroup -> idpGroup.getRoleId().equals(role.getRoleId()))) {
-                logger.warn("marking role {} of user {} for deletion", role.getRoleId(), user.getUserId());
+                logger.warn("marking role {} of user {} for deletion", role.getRoleId(),
+                        user.getUserId());
                 rolesToDelete.add(role);
             } else {
-                logger.trace("user {} still has group for role {} in identity provider", user.getUserId(),
+                logger.trace("user {} still has group for role {} in identity provider",
+                        user.getUserId(),
                         role.getRoleId());
             }
         }
 
         for (RoleIdentifier role : rolesToDelete) {
             user.removeRole(role);
-            logger.warn("deleted role {} from user {}", role.getRoleId(), user.getUserId());
+            logger.warn("deleted role {} from user {}", role.getRoleId(),
+                    user.getUserId());
         }
-
         try {
-            nexusAuthenticatingRealm.updateUser(user);
-            logger.debug("user source: {} - roles: {}", user.getSource(), user.getRoles());
-            logger.debug("updated user {} according to identity provider group information", user.getUserId());
+            userManager.updateUser(user);
         } catch (UserNotFoundException e) {
-            logger.error("unable to find user {} for synchronizing groups", user.getUserId());
+            logger.warn("user {} cannot be found in db for group deletion", user.getUserId());
         } catch (Exception e) {
-            logger.error("unexpected error when updating user {}", user.getUserId());
+            logger.error("unexpected error when deleting user groups - {}", e);
+            return;
         }
     }
 
     private UserWithPrincipals findUserById(final String oauth2proxyUserId) {
         UserWithPrincipals userWithPrincipals = new UserWithPrincipals();
-        for (UserManager userManager : userManagers) {
-            if (userManager.getAuthenticationRealmName() == null) {
-                continue;
-            }
-
-            try {
-                final User user = userManager.getUser(oauth2proxyUserId);
-                logger.debug("found user {} in user manager {}", oauth2proxyUserId, userManager);
-                userWithPrincipals.user = user;
-                userWithPrincipals.addPrincipal(user.getUserId(), userManager.getAuthenticationRealmName());
-                logger.debug("added {} to principal collection", user.getUserId());
-            } catch (UserNotFoundException e) {
-                logger.debug("user {} not found in user manager {}", oauth2proxyUserId, userManager);
-                continue;
-            }
+        try {
+            User user = userManager.getUser(oauth2proxyUserId);
+            userWithPrincipals.setUser(user);
+            userWithPrincipals.addPrincipal(oauth2proxyUserId, OAuth2ProxyUserManager.AUTHENTICATING_REALM);
+        } catch (UserNotFoundException e) {
+            logger.debug("meh, no user {} yet", oauth2proxyUserId);
         }
         return userWithPrincipals;
     }
@@ -242,6 +294,9 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
     @Override
     public boolean supports(AuthenticationToken token) {
         if (token instanceof OAuth2ProxyHeaderAuthToken) {
+            logger.debug("announcing support for token {}", token);
+            return true;
+        } else if (token instanceof UsernamePasswordToken) {
             logger.debug("announcing support for token {}", token);
             return true;
         } else {
@@ -261,19 +316,6 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
         }
 
         return sb.toString();
-    }
-
-    static final class UserWithPrincipals {
-        private User user;
-        private final SimplePrincipalCollection principals = new SimplePrincipalCollection();
-
-        boolean hasPrincipals() {
-            return !principals.isEmpty();
-        }
-
-        void addPrincipal(String userId, String authRealmName) {
-            this.principals.add(userId, authRealmName);
-        }
     }
 
     public static void ensureUserLoginTimestampSchema(DatabaseInstance dbInstance, Logger logger) {
@@ -345,4 +387,5 @@ public class OAuth2ProxyRealm extends AuthenticatingRealm {
             return "unknown";
         }
     }
+
 }

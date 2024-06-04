@@ -26,7 +26,7 @@ public class OAuth2ProxyHeaderAuthToken implements HostAuthenticationToken {
 
     @Override
     public Object getCredentials() {
-        logger.warn("there are no credentials for oauth2 proxy authentication - returning null");
+        logger.trace("there are no credentials for oauth2 proxy authentication - returning null");
         return null;
     }
 
