@@ -47,10 +47,8 @@ frontend you-name-it
 
   # circumvent oauth2 proxy for programmatic access
   acl is_basic_auth hdr_beg(Authorization) -i basic
-  # clients often send a HEAD request without Authorization header first
-  # and this must reach nexus directly, else the OAuth2 dance starts
-  acl is_head method HEAD
-  use_backend nexus if is_basic_auth OR is_head
+  acl is_repo_req path_beg /repository/
+  use_backend nexus if is_basic_auth OR is_repo_req
 
   default_backend oauth2-proxy
 
