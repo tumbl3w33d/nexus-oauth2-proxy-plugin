@@ -205,7 +205,7 @@ public class OAuth2ProxyUserStore extends ComponentSupport {
             return Optional.ofNullable(internalUser.getApiToken());
         }
 
-        log.warn("unable to retrieve password of user {}", principal);
+        log.debug("unable to retrieve password of user {}", principal);
 
         return Optional.empty();
     }
