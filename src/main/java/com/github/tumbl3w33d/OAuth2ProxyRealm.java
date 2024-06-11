@@ -92,13 +92,13 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
     }
 
     private boolean isApiTokenMatching(AuthenticationToken token) {
-        logger.info("token principal for matching api token: {}", token.getPrincipal());
+        logger.debug("token principal for matching api token: {}", token.getPrincipal());
 
         if (token.getPrincipal() instanceof String) {
             Optional<String> maybeApiToken = userManager.getApiToken((String) token.getPrincipal());
 
             if (!maybeApiToken.isPresent()) {
-                logger.warn(
+                logger.debug(
                         "unable to retrieve API token from database user in order to match against provided auth token secret");
                 return false;
             }
