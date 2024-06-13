@@ -45,11 +45,15 @@ frontend you-name-it
   # if this is too invasive for your use case, be more specific
   http-request del-header ^X-Forwarded.*
 
-  # circumvent oauth2 proxy for programmatic access
+  # use case: artifact download from /repository via UI
+  use_backend be_oauth2-proxy if { req.cook(_oauth2_proxy) -m found }
+
+  # use case: programmatic access, circumvent oauth2 proxy
   acl is_basic_auth hdr_beg(Authorization) -i basic
   acl is_repo_req path_beg /repository/
-  use_backend nexus if is_basic_auth OR is_repo_req
+  use_backend be_nexus if is_basic_auth OR is_repo_req
 
+  # use case: interactive access via browser
   default_backend oauth2-proxy
 
 
