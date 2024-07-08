@@ -28,5 +28,9 @@
                 "vscjava.vscode-java-pack"
             ]
         }
+    },
+    "remoteUser": "vscode",
+    "containerEnv": {
+        "HOME": "/home/vscode"
     }
 }
