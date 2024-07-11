@@ -2,7 +2,6 @@ package com.github.tumbl3w33d;
 
 import static java.util.Arrays.asList;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -22,9 +21,12 @@ public class OAuth2ProxyUiPluginDescriptor implements UiPluginDescriptor {
 
     private final List<String> scripts;
 
+    private final List<String> styles;
+
     @Inject
     public OAuth2ProxyUiPluginDescriptor(final ClassSpace space) {
         scripts = asList("/static/nexus-oauth2-proxy-bundle.js");
+        styles = asList("/static/rapture/resources/nexus-oauth2-proxy-bundle.css");
     }
 
     @Override
@@ -41,6 +43,6 @@ public class OAuth2ProxyUiPluginDescriptor implements UiPluginDescriptor {
     @Nullable
     @Override
     public List<String> getStyles() {
-      return Collections.emptyList();
+      return styles;
     }
 }
