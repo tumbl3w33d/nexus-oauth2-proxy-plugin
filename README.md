@@ -15,18 +15,24 @@ It is important to highlight that this plugin is provided on an 'as-is' basis, w
 * makes use of several headers sent by OAuth2 proxy (depending on its configuration)
   * see constants in [OAuth2ProxyHeaderAuthTokenFactory](src/main/java/com/github/tumbl3w33d/OAuth2ProxyHeaderAuthTokenFactory.java)
   * creates an AuthenticationToken used by Nexus
-* creates a user in a dedicated database (i.e., not the 'local db' of Nexus) if none with the given id (`preferred_username`) exists
+* creates a user in a dedicated database table (i.e., not where Nexus checks for 'Local' users) if none with the given id (`preferred_username`) exists
   * anyone authenticated with your identity provider can access Nexus
   * you would control access by granting necessary scopes accessing OAuth2 Proxy only to eligible user groups
   * user creation currently has a rather simplistic strategy to extract `<firstname>.<lastname>` from `preferred_username`
 * group/scope to role sync
   * if you configure OAuth2 Proxy with the well-known `groups` claim, it will retrieve that information from the identity provider
-  * the groups received in the related header will be stored in a database and become available for the 'external role mapping' functionality
+  * the groups received in the related header will be stored in a dedicated database table and become available for the 'external role mapping' functionality
 * automatic expiry of API tokens
   * there is a configurable task that lets API tokens expire, so another login by the user is necessary to renew it
   * as long as the user keeps showing up regularly, their token will not expire
 
 **Note**: After authenticating with this realm, the logout button is non-operative, which is a common limitation with header-based authentication methods. To force a logout, you need to logout from your identity provider and/or delete the OAuth2 Proxy cookie if you must logout for some reason.
+
+## Supported Nexus version
+
+This plugin moves along with the latest OSS version of Nexus.
+
+When they introduce breaking changes, like the change of underlying database with version 3.71.0, this results in a new major version of this plugin being released when adjustments have been made. You are free to use older versions but they will probably not receive maintenance, unless you contribute it yourself. In addition, as long as the user base is small and quiet, there will not be much effort invested in adding complex migration logic. Since this plugin is mostly developed for internal use (so far), an appropriate solution for that use case will be found and that might mean dropping existing data (which basically means persisted API tokens) and start over in order keep things simple.
 
 ## Necessary infrastructure
 
