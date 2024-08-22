@@ -2,6 +2,7 @@ package com.github.tumbl3w33d.users;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -14,7 +15,8 @@ import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.role.Role;
 
 import com.github.tumbl3w33d.OAuth2ProxyRealm;
-import com.github.tumbl3w33d.users.db.OAuth2ProxyRoleStore;
+import com.github.tumbl3w33d.h2.OAuth2ProxyRoleStore;
+import com.github.tumbl3w33d.users.db.OAuth2ProxyRole;
 
 @Named(OAuth2ProxyRealm.NAME)
 @Singleton
@@ -39,7 +41,11 @@ public class OAuth2ProxyAuthorizationManager extends AbstractReadOnlyAuthorizati
 
     @Override
     public Role getRole(String roleId) {
-        return roleStore.getRole(roleId);
+        Optional<OAuth2ProxyRole> maybeRole = roleStore.getRole(roleId);
+        if (maybeRole.isPresent()) {
+            return maybeRole.get().toNexusRole();
+        }
+        return null;
     }
 
     @Override

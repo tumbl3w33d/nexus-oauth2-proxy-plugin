@@ -1,0 +1,44 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.tumbl3w33d.h2.OAuth2ProxyLoginRecordDAO">
+
+    <resultMap id="OAuth2ProxyLoginRecordMap" type="com.github.tumbl3w33d.users.db.OAuth2ProxyLoginRecord">
+        <id property="userId" column="userId"/>
+        <result property="lastLogin" column="lastLogin"/>
+    </resultMap>
+
+    <update id="createSchema">
+        CREATE TABLE IF NOT EXISTS oauth2_proxy_login_record (
+            userId VARCHAR(255) NOT NULL,
+            lastLogin TIMESTAMP NOT NULL,
+            PRIMARY KEY (userId)
+        );
+    </update>
+
+    <insert id="create" parameterType="com.github.tumbl3w33d.users.db.OAuth2ProxyLoginRecord">
+        INSERT INTO oauth2_proxy_login_record (userId, lastLogin)
+        VALUES (#{userId, jdbcType=VARCHAR}, #{lastLogin, jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="update" parameterType="com.github.tumbl3w33d.users.db.OAuth2ProxyLoginRecord">
+        UPDATE oauth2_proxy_login_record
+        SET lastLogin = #{lastLogin, jdbcType=TIMESTAMP}
+        WHERE userId = #{userId, jdbcType=VARCHAR}
+    </update>
+
+    <select id="read" resultMap="OAuth2ProxyLoginRecordMap">
+        SELECT userId, lastLogin
+        FROM oauth2_proxy_login_record
+        WHERE userId = #{userId}
+    </select>
+
+    <delete id="delete" parameterType="String">
+        DELETE FROM oauth2_proxy_login_record
+        WHERE userId = #{userId}
+    </delete>
+
+    <select id="browse" resultMap="OAuth2ProxyLoginRecordMap">
+        SELECT userId, lastLogin
+        FROM oauth2_proxy_login_record
+    </select>
+
+</mapper>

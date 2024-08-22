@@ -19,8 +19,8 @@ import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
 
 import com.github.tumbl3w33d.OAuth2ProxyRealm;
+import com.github.tumbl3w33d.h2.OAuth2ProxyUserStore;
 import com.github.tumbl3w33d.users.db.OAuth2ProxyUser;
-import com.github.tumbl3w33d.users.db.OAuth2ProxyUserStore;
 
 @Named(OAuth2ProxyUserManager.SOURCE)
 @Singleton
@@ -145,9 +145,20 @@ public class OAuth2ProxyUserManager extends AbstractUserManager {
         return user;
     }
 
+    /**
+     * Nexus requires this generic update method to be available, but
+     * we reduce it to an update of groups as there is no other use case
+     * in this context.
+     */
+    @Deprecated
     @Override
     public User updateUser(User user) throws UserNotFoundException {
         return userStore.updateUser(user);
+    }
+
+    public User updateUserGroups(User user) throws UserNotFoundException {
+        userStore.updateUserGroups(user.getUserId(), user.getRoles());
+        return user;
     }
 
     @Override

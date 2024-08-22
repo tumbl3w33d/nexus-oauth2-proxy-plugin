@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.HasStringId;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserStatus;
@@ -19,7 +20,7 @@ import org.sonatype.nexus.security.user.UserStatus;
 import com.github.tumbl3w33d.users.IncompleteOAuth2ProxyUserDataException;
 import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
 
-public class OAuth2ProxyUser extends AbstractEntity implements Comparable<OAuth2ProxyUser>, Serializable {
+public class OAuth2ProxyUser extends AbstractEntity implements Comparable<OAuth2ProxyUser>, Serializable, HasStringId {
 
     private static final Logger logger = LoggerFactory.getLogger(OAuth2ProxyUser.class.getName());
 
@@ -172,5 +173,15 @@ public class OAuth2ProxyUser extends AbstractEntity implements Comparable<OAuth2
     @Override
     public int hashCode() {
         return Objects.hash(preferred_username, groups, email, apiToken);
+    }
+
+    @Override
+    public String getId() {
+        return getPreferredUsername();
+    }
+
+    @Override
+    public void setId(String id) {
+        setPreferredUsername(id);
     }
 }

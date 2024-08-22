@@ -1,0 +1,50 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.tumbl3w33d.h2.OAuth2ProxyUserDAO">
+
+  <insert id="createSchema">
+    CREATE TABLE IF NOT EXISTS oauth2_proxy_user (
+      preferred_username VARCHAR(512)   NOT NULL,
+      email              VARCHAR(512)   NOT NULL,
+      apiToken           VARCHAR(512),
+      groups             TEXT,
+
+      CONSTRAINT pk_oauth2_proxy_user_preferred_username PRIMARY KEY (preferred_username)
+    );
+  </insert>
+
+  <resultMap id="OAuth2ProxyUserMap" type="com.github.tumbl3w33d.users.db.OAuth2ProxyUser">
+    <result property="preferredUsername" column="preferred_username"/>
+    <result property="email" column="email"/>
+    <result property="apiToken" column="apiToken"/>
+    <result property="groups" column="groups" typeHandler="com.github.tumbl3w33d.h2.RoleIdentifierTypeHandler"/>
+  </resultMap>
+
+  <select id="browse" resultMap="OAuth2ProxyUserMap">
+    SELECT * FROM oauth2_proxy_user;
+  </select>
+  
+  <insert id="create" parameterType="com.github.tumbl3w33d.users.db.OAuth2ProxyUser">
+    INSERT INTO oauth2_proxy_user(preferred_username, email, apiToken, groups)
+        VALUES (#{preferred_username}, #{email}, #{apiToken}, #{groupString});
+  </insert>
+
+  <select id="read" resultMap="OAuth2ProxyUserMap">
+    SELECT * FROM oauth2_proxy_user WHERE preferred_username = #{value};
+  </select>
+
+  <update id="updateGroups" parameterType="String">
+    UPDATE oauth2_proxy_user SET
+        groups = #{groupString}
+        WHERE preferred_username = #{preferredUsername};
+  </update>
+
+  <update id="updateApiToken">
+    UPDATE oauth2_proxy_user SET apiToken = #{apiToken}
+        WHERE preferred_username = #{preferredUsername};
+  </update>
+
+  <delete id="delete" parameterType="String">
+    DELETE FROM oauth2_proxy_user WHERE preferred_username = #{value};
+  </delete>
+
+</mapper>

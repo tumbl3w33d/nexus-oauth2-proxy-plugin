@@ -4,7 +4,7 @@
     "initializeCommand": "docker pull mcr.microsoft.com/devcontainers/base:debian",
     "features": {
         "ghcr.io/devcontainers/features/java:1": {
-            "version": "21",
+            "version": "22",
             "jdkDistro": "tem",
             "installMaven": "true",
             "installGradle": "false"
@@ -17,7 +17,7 @@
                 "java.configuration.updateBuildConfiguration": "automatic",
                 "java.configuration.runtimes": [
                     {
-                        "name": "JavaSE-21",
+                        "name": "JavaSE-22",
                         "path": "/usr/local/sdkman/candidates/java/current"
                     }
                 ],

@@ -4,12 +4,13 @@ import java.io.Serializable;
 import java.util.Objects;
 
 import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.HasStringId;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 
 import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
 
-public class OAuth2ProxyRole extends AbstractEntity implements Comparable<OAuth2ProxyRole>, Serializable {
+public class OAuth2ProxyRole extends AbstractEntity implements Comparable<OAuth2ProxyRole>, Serializable, HasStringId {
 
     private String name;
 
@@ -69,6 +70,16 @@ public class OAuth2ProxyRole extends AbstractEntity implements Comparable<OAuth2
         nexusRole.setDescription("identity provider role '" + getName() + "'");
 
         return nexusRole;
+    }
+
+    @Override
+    public String getId() {
+        return getId();
+    }
+
+    @Override
+    public void setId(String id) {
+        setId(id);
     }
 
 }

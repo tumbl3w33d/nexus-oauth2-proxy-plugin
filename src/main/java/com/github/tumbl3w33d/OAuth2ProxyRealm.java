@@ -3,13 +3,13 @@ package com.github.tumbl3w33d;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.security.SecureRandom;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,20 +32,15 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.eclipse.sisu.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
+import com.github.tumbl3w33d.h2.OAuth2ProxyLoginRecordStore;
+import com.github.tumbl3w33d.h2.OAuth2ProxyRoleStore;
 import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
 import com.github.tumbl3w33d.users.OAuth2ProxyUserManager.UserWithPrincipals;
-import com.github.tumbl3w33d.users.db.OAuth2ProxyRoleStore;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.github.tumbl3w33d.users.db.OAuth2ProxyLoginRecord;
 
 @Named(OAuth2ProxyRealm.NAME)
 @Singleton
@@ -66,19 +61,17 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
 
     private final OAuth2ProxyUserManager userManager;
     private final OAuth2ProxyRoleStore roleStore;
-
-    private final DatabaseInstance databaseInstance;
-
+    private final OAuth2ProxyLoginRecordStore loginRecordStore;
     private PasswordService passwordService;
 
     @Inject
     public OAuth2ProxyRealm(
-            @Named(OAuth2ProxyDatabase.NAME) DatabaseInstance databaseInstance,
             @Named OAuth2ProxyUserManager userManager, @Named OAuth2ProxyRoleStore roleStore,
+            @Named OAuth2ProxyLoginRecordStore loginRecordStore,
             @Named PasswordService passwordService) {
         this.userManager = checkNotNull(userManager);
-        this.databaseInstance = checkNotNull(databaseInstance);
         this.roleStore = roleStore;
+        this.loginRecordStore = loginRecordStore;
         this.passwordService = passwordService;
 
         setName(ID);
@@ -88,7 +81,6 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
         // authentication is provided by oauth2 proxy headers with every request
         setAuthenticationCachingEnabled(false);
         setAuthorizationCachingEnabled(false);
-        ensureUserLoginTimestampSchema(databaseInstance, logger);
     }
 
     private boolean isApiTokenMatching(AuthenticationToken token) {
@@ -171,8 +163,8 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
         if (userWithPrincipals.hasUser()) {
             String userId = userWithPrincipals.getUser().getUserId();
 
-            logger.debug("user {} (source {}) has roles {} before sync", userId,
-                    userWithPrincipals.getUser().getSource(),
+            logger.trace("user {} (source {}) has roles {} before sync", userId,
+                            userWithPrincipals.getUser().getSource(),
                     userWithPrincipals.getUser().getRoles());
 
             if (oauth2Token.groups != null) {
@@ -209,7 +201,7 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
 
             Set<String> roles = user.getRoles().stream().map(role -> role.getRoleId()).collect(Collectors.toSet());
 
-            logger.debug("user {} has roles {}", principal, roles);
+            logger.trace("user {} has roles {}", principal, roles);
 
             return new SimpleAuthorizationInfo(roles);
         } catch (UserNotFoundException e) {
@@ -221,7 +213,7 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
     }
 
     void syncExternalRolesForGroups(User user, String groupsString) {
-        // mark idp groups with prefix to recognize them later
+
         Set<RoleIdentifier> idpGroups = Stream.of(groupsString.trim().split(","))
                 .map(groupString -> new RoleIdentifier(OAuth2ProxyUserManager.SOURCE, groupString))
                 .collect(Collectors.toSet());
@@ -232,16 +224,6 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
 
         logger.trace("added idp groups as role to user {}: {}", user.getUserId(),
                 user.getRoles().stream().map(group -> group.getRoleId()).collect(Collectors.toSet()));
-
-        try {
-            userManager.updateUser(user);
-        } catch (UserNotFoundException e) {
-            logger.warn("user {} cannot be found in db for group synchronization", user.getUserId());
-            return;
-        } catch (Exception e) {
-            logger.error("unexpected error when updating user groups - {}", e);
-            return;
-        }
 
         Set<RoleIdentifier> rolesToDelete = new HashSet<>();
 
@@ -269,12 +251,14 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
             logger.warn("deleted role {} from user {}", role.getRoleId(),
                     user.getUserId());
         }
+        
         try {
-            userManager.updateUser(user);
+            userManager.updateUserGroups(user);
         } catch (UserNotFoundException e) {
-            logger.warn("user {} cannot be found in db for group deletion", user.getUserId());
+            logger.warn("user {} cannot be found in db for group synchronization", user.getUserId());
+            return;
         } catch (Exception e) {
-            logger.error("unexpected error when deleting user groups - {}", e);
+            logger.error("unexpected error when updating user groups - {}", e);
             return;
         }
     }
@@ -318,64 +302,27 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
         return sb.toString();
     }
 
-    public static void ensureUserLoginTimestampSchema(DatabaseInstance dbInstance, Logger logger) {
-        try (ODatabaseDocumentTx db = dbInstance.acquire()) {
-
-            OSchema schema = db.getMetadata().getSchema();
-            final String className = CLASS_USER_LOGIN.toUpperCase();
-            if (!schema.existsClass(className)) {
-                OClass oAuth2ProxyUserLogin = schema.createClass(className);
-                oAuth2ProxyUserLogin.createProperty(FIELD_USER_ID, OType.STRING).setNotNull(true);
-                oAuth2ProxyUserLogin.createProperty(FIELD_LAST_LOGIN, OType.DATETIME)
-                        .setNotNull(true);
-            }
-            logger.info("Ensured schema class exists for " + CLASS_USER_LOGIN);
-        } catch (Exception e) {
-            logger.error("Failed to ensure schema for " + CLASS_USER_LOGIN);
-        }
-    }
-
     void recordLogin(String userId) {
-        try (ODatabaseDocumentTx db = databaseInstance.acquire()) {
-            db.begin();
+        Optional<OAuth2ProxyLoginRecord> maybeRecord = loginRecordStore.getLoginRecord(userId);
 
-            List<ODocument> userLogins = db.query(new OSQLSynchQuery<ODocument>(
-                    "select from " + CLASS_USER_LOGIN + " where " + FIELD_USER_ID + " = ?", 1),
-                    userId);
-
-            ODocument userLogin;
-
-            boolean shouldUpdate = false;
-
-            if (userLogins.isEmpty()) {
-                logger.debug("No login recorded for {} yet", userId);
-                userLogin = createUserLoginDoc(userId);
-                shouldUpdate = true;
-            } else {
-                userLogin = userLogins.get(0);
-                Date lastLoginDate = userLogin.field(FIELD_LAST_LOGIN);
-                LocalDate lastLoginLocalDate = lastLoginDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                LocalDate nowLocalDate = LocalDate.now();
-
-                if (!lastLoginLocalDate.equals(nowLocalDate)) {
-                    logger.info("Last known login for {} was {}", userId, formatDateString(lastLoginDate));
-                    shouldUpdate = true;
-                }
-            }
-
-            if (shouldUpdate) {
-                userLogin.field(FIELD_LAST_LOGIN, new Date()); // Use current date
-                userLogin.save();
-                db.commit();
-            }
-
-        } catch (Exception e) {
-            logger.error("Failed to persist login timestamp for user {} - {}", userId, e);
+        if (!maybeRecord.isPresent()) {
+            logger.debug("No login recorded for {} yet. Creating it now.", userId);
+            loginRecordStore.createLoginRecord(userId);
+            return;
         }
-    }
 
-    ODocument createUserLoginDoc(String userId) {
-        return new ODocument(CLASS_USER_LOGIN).field(FIELD_USER_ID, userId);
+        Timestamp lastLoginDate = maybeRecord.get().getLastLogin();
+        LocalDate lastLoginLocalDate = lastLoginDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate nowLocalDate = LocalDate.now();
+
+        logger.debug("Last known login for {} was {}", userId, lastLoginDate);
+
+        if (!lastLoginLocalDate.equals(nowLocalDate)) {
+            logger.debug("Updating last known login for {} (was {})", userId, lastLoginDate);
+            loginRecordStore.updateLoginRecord(userId);
+        } else {
+            logger.debug("login record of {} is already up-to-date", userId);
+        }
     }
 
     static String formatDateString(Date date) {
