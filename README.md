@@ -34,6 +34,22 @@ This plugin moves along with the latest OSS version of Nexus.
 
 When they introduce breaking changes, like the change of underlying database with version 3.71.0, this results in a new major version of this plugin being released when adjustments have been made. You are free to use older versions but they will probably not receive maintenance, unless you contribute it yourself. In addition, as long as the user base is small and quiet, there will not be much effort invested in adding complex migration logic. Since this plugin is mostly developed for internal use (so far), an appropriate solution for that use case will be found and that might mean dropping existing data (which basically means persisted API tokens) and start over in order keep things simple.
 
+## Installation
+
+The recommended way to install the plugin is by dropping the `.kar` into the Nexus `/deploy` folder, as described [here](https://sonatype-nexus-community.github.io/nexus-development-guides/plugin-install.html#more-permanent-install).
+
+Once Nexus picked it up, it will offer you to activate the new realm this plugin comes with:
+
+![alt text](images/realm_installation.png)
+
+You can see the `OAuth2ProxyRealm` activated and first in the list, so it takes effect first in the authentication chain.
+
+Now you should be able to access the Nexus via your OAuth2 Proxy and end up logged in. If you encounter strange behavior during this activation phase, it is easiest to test with a private browser window to rule out cached cookies or basic authentication can interfere.
+
+Users that logged in using this realm will now appear in the Nexus administration section under `Security -> Users -> Source: OAuth2Proxy`.
+
+You also want to visit `System -> Tasks` where you will find a new task for invalidating API tokens for users who did not show up for a while. While it has a default of 30d defined in the code, it appeared that it does not take effect until once set and saved via UI, so make sure you set an appropriate value there.
+
 ## Necessary infrastructure
 
 You typically put an OAuth2 Proxy in front of your application and make sure that related `X-Forwarded-` headers do not reach the application other than those originating from the OAuth2 Proxy.
@@ -101,3 +117,7 @@ skip_provider_button = true
 ```
 
 **Note**: Depending on the amount of data the OAuth2 Proxy receives from your IDP (especially list of groups) you might want to look into [changing its session storage to redis/valkey](https://oauth2-proxy.github.io/oauth2-proxy/configuration/session_storage/#redis-storage). The proxy will warn you about data exceeding limits which results in multiple cookies being set for the proxy session.
+
+## Troubleshooting
+
+If you encounter authentication issues, you can activate logging for the plugin classes by creating a logger in the Nexus administration section (`Support -> Logging -> Create Logger`), e.g. for the top level package `com.github.tumbl3w33d`.
