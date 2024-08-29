@@ -90,6 +90,52 @@ backend nexus
   server nexus nexus:8081 check
 ```
 
+## Example with Nginx as entrypoint
+
+```
+...
+...
+# The block server only
+    server {
+        listen 443 ssl;
+        server_name your_nexus_host;
+
+        proxy_headers_hash_bucket_size 128;
+
+        ssl_certificate /etc/nginx/certs/server-tls.crt;
+        ssl_certificate_key /etc/nginx/certs/user.key;
+
+        
+        location / {
+            # Clear existing headers that will be added upstream by oauth2-proxy (Optional, depends on your config)
+            proxy_set_header X-Forwarded-Email "";
+            proxy_set_header X-Forwarded-Groups "";
+            proxy_set_header X-Forwarded-User "";
+
+            # Set proxy pass headers
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Cookie $http_cookie;
+
+            proxy_pass http://oauth2-proxy:4180;
+
+            # Usually oauth2-proxy delivers the login screen with a 403 status code.
+            # Safari can't handle that so we intercept 403 errors and return 200 instead.
+            proxy_intercept_errors on;
+            error_page 403 =200 @change_status;
+        }
+
+        location @change_status {
+            # proxy to the auth-proxy, but this time with status code 200
+            proxy_pass http://auth2-proxy:4180;
+        }
+    }
+...
+...    
+```
+
 ## Example OAuth2 Proxy config
 
 ```
