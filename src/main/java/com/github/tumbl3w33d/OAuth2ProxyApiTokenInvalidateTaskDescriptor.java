@@ -4,10 +4,12 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
+@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class OAuth2ProxyApiTokenInvalidateTaskDescriptor
@@ -22,17 +24,17 @@ public class OAuth2ProxyApiTokenInvalidateTaskDescriptor
     "After this duration the API token will be overwritten and the user must renew it interactively."
     ,
     FormField.MANDATORY).withMinimumValue(1).withInitialValue(30);
-    
+
     @Inject
     public OAuth2ProxyApiTokenInvalidateTaskDescriptor() {
-        super(TYPE_ID, OAuth2ProxyApiTokenInvalidateTask.class,       "OAuth2 Proxy API token invalidator",
+        super(TYPE_ID, OAuth2ProxyApiTokenInvalidateTask.class, "OAuth2 Proxy API token invalidator",
         TaskDescriptorSupport.VISIBLE, TaskDescriptorSupport.EXPOSED,
         TaskDescriptorSupport.REQUEST_RECOVERY, new FormField[] { field });
     }
-    
+
     @Override
     public boolean allowConcurrentRun() {
         return false;
     }
-    
+
 }

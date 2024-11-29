@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-plugins</artifactId>
-        <version>3.68.1-02</version>
+        <version>3.70.1-02</version>
     </parent>
 
     <groupId>com.github.tumbl3w33d</groupId>
@@ -42,8 +42,8 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -73,7 +73,13 @@
         </dependency>
         <dependency>
             <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-common</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.sonatype.nexus</groupId>
             <artifactId>nexus-rest</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.sonatype.nexus</groupId>

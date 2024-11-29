@@ -224,4 +224,8 @@ public class OAuth2ProxyUserManager extends AbstractUserManager {
         return userStore.getApiToken(principal);
     }
 
+    @Override
+    public boolean isConfigured() {
+        return true;
+    }
 }
