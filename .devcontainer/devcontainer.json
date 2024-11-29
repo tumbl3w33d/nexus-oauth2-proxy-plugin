@@ -1,11 +1,10 @@
 {
     "name": "Java",
-	"image": "mcr.microsoft.com/devcontainers/base:debian",
-    "initializeCommand": "docker pull mcr.microsoft.com/devcontainers/base:debian",
+	"image": "mcr.microsoft.com/devcontainers/java",
+    "initializeCommand": "docker pull mcr.microsoft.com/devcontainers/java",
     "features": {
         "ghcr.io/devcontainers/features/java:1": {
-            "version": "22",
-            "jdkDistro": "tem",
+            "version": "none",
             "installMaven": "true",
             "installGradle": "false"
         }
@@ -15,13 +14,7 @@
             "settings": {
                 "java.compile.nullAnalysis.mode": "automatic",
                 "java.configuration.updateBuildConfiguration": "automatic",
-                "java.configuration.runtimes": [
-                    {
-                        "name": "JavaSE-22",
-                        "path": "/usr/local/sdkman/candidates/java/current"
-                    }
-                ],
-                "java.jdt.ls.java.home": "/usr/local/sdkman/candidates/java/current",
+                "java.jdt.ls.java.home": "/docker-java-home",
                 "telemetry.enableTelemetry": false
             },
             "extensions": [
