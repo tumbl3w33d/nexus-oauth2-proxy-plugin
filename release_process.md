@@ -20,7 +20,7 @@ mvn versions:set -DnewVersion=0.1.0
 git commit -am "Prepare for release 0.1.0"
 git tag -s 0.1.0 -m "0.1.0"
 git push && git push --tags
-mvn versions:set -DnewVersion=0.1.1-SNAPSHOT
-git commit -am "Start next development iteration with 0.1.1-SNAPSHOT"
+mvn versions:set -DnewVersion=0.2.0-SNAPSHOT
+git commit -am "Start next development iteration with 0.2.0-SNAPSHOT"
 git push
 ```
