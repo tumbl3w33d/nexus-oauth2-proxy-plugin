@@ -37,12 +37,12 @@ public class OAuth2ProxyUiPluginDescriptor implements UiPluginDescriptor {
     @Nullable
     @Override
     public List<String> getScripts(final boolean isDebug) {
-      return scripts;
+        return scripts;
     }
 
     @Nullable
     @Override
     public List<String> getStyles() {
-      return styles;
+        return styles;
     }
 }

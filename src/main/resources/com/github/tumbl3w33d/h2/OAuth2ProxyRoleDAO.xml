@@ -1,29 +1,28 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.github.tumbl3w33d.h2.OAuth2ProxyRoleDAO">
 
-  <insert id="createSchema">
-    CREATE TABLE IF NOT EXISTS oauth2_proxy_role (
-      name VARCHAR(512) NOT NULL,
+    <insert id="createSchema">
+        CREATE TABLE IF NOT EXISTS oauth2_proxy_role (
+            name VARCHAR(512) NOT NULL,
+            CONSTRAINT pk_oauth2_proxy_role_name PRIMARY KEY (name)
+        );
+    </insert>
 
-      CONSTRAINT pk_oauth2_proxy_role_name PRIMARY KEY (name)
-    );
-  </insert>
+    <select id="browse" resultType="com.github.tumbl3w33d.users.db.OAuth2ProxyRole">
+        SELECT * FROM oauth2_proxy_role;
+    </select>
 
-  <select id="browse" resultType="com.github.tumbl3w33d.users.db.OAuth2ProxyRole">
-    SELECT * FROM oauth2_proxy_role;
-  </select>
+    <insert id="create" parameterType="com.github.tumbl3w33d.users.db.OAuth2ProxyRole">
+        INSERT INTO oauth2_proxy_role(name)
+            VALUES (#{name});
+    </insert>
 
-  <insert id="create" parameterType="com.github.tumbl3w33d.users.db.OAuth2ProxyRole">
-    INSERT INTO oauth2_proxy_role(name)
-        VALUES (#{name});
-  </insert>
+    <select id="read" resultType="com.github.tumbl3w33d.users.db.OAuth2ProxyRole">
+        SELECT * FROM oauth2_proxy_role WHERE name = #{value};
+    </select>
 
-  <select id="read" resultType="com.github.tumbl3w33d.users.db.OAuth2ProxyRole">
-    SELECT * FROM oauth2_proxy_role WHERE name = #{value};
-  </select>
-
-  <delete id="delete">
-    DELETE FROM oauth2_proxy_role WHERE name = #{value};
-  </delete>
+    <delete id="delete">
+        DELETE FROM oauth2_proxy_role WHERE name = #{value};
+    </delete>
 
 </mapper>

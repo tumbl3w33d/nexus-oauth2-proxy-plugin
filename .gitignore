@@ -1,10 +1,7 @@
 #.classpath // we need this because when auto generated some entries are missing
-.factorypath
 .project
 .settings
 .vscode
-bin
 node_modules
 target
 yarn.lock
-*.versionsBackup

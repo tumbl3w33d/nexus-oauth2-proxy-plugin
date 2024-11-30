@@ -55,17 +55,17 @@ public class OAuth2ProxyUserManagerTest {
         userManager = getTestUserManager(userStore);
         userManager.changePassword(exampleUser.getUserId(), "secret123");
 
-     ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
-     ArgumentCaptor<String> passwordCaptor = ArgumentCaptor.forClass(String.class);
-     verify(userStore).updateUserApiToken(userIdCaptor.capture(),
-             passwordCaptor.capture());
+        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> passwordCaptor = ArgumentCaptor.forClass(String.class);
+        verify(userStore).updateUserApiToken(userIdCaptor.capture(),
+                passwordCaptor.capture());
 
-     String capturedUserId = userIdCaptor.getValue();
-     String capturedPassword = passwordCaptor.getValue();
+        String capturedUserId = userIdCaptor.getValue();
+        String capturedPassword = passwordCaptor.getValue();
 
-     assertEquals(exampleUser.getUserId(), capturedUserId);
-     assertEquals("secret123", capturedPassword);
- }
+        assertEquals(exampleUser.getUserId(), capturedUserId);
+        assertEquals("secret123", capturedPassword);
+    }
 
     @Test
     void testCreateUserObject() {
