@@ -21,6 +21,7 @@
             },
             "extensions": [
                 "EditorConfig.EditorConfig",
+                "kennylong.kubernetes-yaml-formatter",
                 "vscjava.vscode-java-pack"
             ]
         }
