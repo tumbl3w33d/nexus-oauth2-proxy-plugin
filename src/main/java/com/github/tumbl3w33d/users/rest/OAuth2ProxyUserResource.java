@@ -36,63 +36,64 @@ import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
 @Path("/oauth2-proxy/user")
 public class OAuth2ProxyUserResource extends ComponentSupport implements Resource {
 
-  private final SecuritySystem securitySystem;
+    private final SecuritySystem securitySystem;
 
-  @Inject
-  public OAuth2ProxyUserResource(final SecuritySystem securitySystem) {
-    this.securitySystem = checkNotNull(securitySystem);
-  }
-
-  private User getCurrentUser() throws UserNotFoundException {
-    User user = securitySystem.currentUser();
-    if (user == null) {
-      throw new UserNotFoundException("Unable to get current user");
-    }
-    return user;
-  }
-
-  @POST
-  @Path("/reset-token")
-  @RequiresAuthentication
-  @RequiresUser
-  @Produces(MediaType.TEXT_PLAIN)
-  public String resetToken() {
-    String generatedToken = OAuth2ProxyRealm.generateSecureRandomString(32);
-
-    try {
-      User user = getCurrentUser();
-
-      securitySystem.changePassword(user.getUserId(), generatedToken, true);
-
-      log.debug("user {} reset their api token", user.getUserId());
-
-    } catch (UserNotFoundException e) {
-      log.debug("user not found for token reset");
-      throw new WebApplicationMessageException(Status.NOT_FOUND, "no user found for token reset",
-          MediaType.APPLICATION_JSON);
+    @Inject
+    public OAuth2ProxyUserResource(final SecuritySystem securitySystem) {
+        this.securitySystem = checkNotNull(securitySystem);
     }
 
-    return generatedToken;
-  }
-
-  @DELETE
-  @Path("/{userId}")
-  @RequiresAuthentication
-  @RequiresPermissions("nexus:users:delete")
-  public void deleteUser(@PathParam("userId") final String userId) {
-    User user = null;
-    try {
-      user = securitySystem.getUser(userId, OAuth2ProxyUserManager.SOURCE);
-
-      securitySystem.deleteUser(userId, user.getSource());
-
-    } catch (NoSuchUserManagerException e) {
-      throw new WebApplicationMessageException(Status.INTERNAL_SERVER_ERROR, "unable to access related user manager",
-          MediaType.APPLICATION_JSON);
-    } catch (UserNotFoundException e) {
-      log.debug("unable to retrieve user with id {} for deletion - {}", userId, e);
-      throw new WebApplicationMessageException(Status.NOT_FOUND, "no such user", MediaType.APPLICATION_JSON);
+    private User getCurrentUser() throws UserNotFoundException {
+        User user = securitySystem.currentUser();
+        if (user == null) {
+            throw new UserNotFoundException("Unable to get current user");
+        }
+        return user;
     }
-  }
+
+    @POST
+    @Path("/reset-token")
+    @RequiresAuthentication
+    @RequiresUser
+    @Produces(MediaType.TEXT_PLAIN)
+    public String resetToken() {
+        String generatedToken = OAuth2ProxyRealm.generateSecureRandomString(32);
+
+        try {
+            User user = getCurrentUser();
+
+            securitySystem.changePassword(user.getUserId(), generatedToken, true);
+
+            log.debug("user {} reset their api token", user.getUserId());
+
+        } catch (UserNotFoundException e) {
+            log.debug("user not found for token reset");
+            throw new WebApplicationMessageException(Status.NOT_FOUND, "no user found for token reset",
+                    MediaType.APPLICATION_JSON);
+        }
+
+        return generatedToken;
+    }
+
+    @DELETE
+    @Path("/{userId}")
+    @RequiresAuthentication
+    @RequiresPermissions("nexus:users:delete")
+    public void deleteUser(@PathParam("userId") final String userId) {
+        User user = null;
+        try {
+            user = securitySystem.getUser(userId, OAuth2ProxyUserManager.SOURCE);
+
+            securitySystem.deleteUser(userId, user.getSource());
+
+        } catch (NoSuchUserManagerException e) {
+            throw new WebApplicationMessageException(Status.INTERNAL_SERVER_ERROR,
+                    "unable to access related user manager",
+                    MediaType.APPLICATION_JSON);
+        } catch (UserNotFoundException e) {
+            log.debug("unable to retrieve user with id {} for deletion - {}", userId, e);
+            throw new WebApplicationMessageException(Status.NOT_FOUND, "no such user", MediaType.APPLICATION_JSON);
+        }
+    }
 
 }

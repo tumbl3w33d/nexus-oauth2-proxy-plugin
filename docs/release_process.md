@@ -15,7 +15,7 @@
 
 Steps:
 
-``` shell
+```shell
 mvn versions:set -DnewVersion=0.1.0
 git commit -am "Prepare for release 0.1.0"
 git tag -s 0.1.0 -m "0.1.0"

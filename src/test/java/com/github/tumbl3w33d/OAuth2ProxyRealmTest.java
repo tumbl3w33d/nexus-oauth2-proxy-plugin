@@ -312,7 +312,7 @@ public class OAuth2ProxyRealmTest {
     }
 
     private OAuth2ProxyRealm getTestRealm(OAuth2ProxyUserManager userManager,
-                    OAuth2ProxyRoleStore roleStore) {
+            OAuth2ProxyRoleStore roleStore) {
         PasswordService passwordService = new DefaultSecurityPasswordService(Mockito.mock(PasswordService.class));
 
         if (userManager == null) {

@@ -47,7 +47,6 @@ public class OAuth2ProxyUserManager extends AbstractUserManager {
         return AUTHENTICATING_REALM;
     }
 
-
     @Override
     public Set<User> listUsers() {
         return userStore.getAllUsers();

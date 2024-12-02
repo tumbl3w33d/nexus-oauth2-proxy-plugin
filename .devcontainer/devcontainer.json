@@ -1,8 +1,9 @@
 {
     "name": "Java",
-	"image": "mcr.microsoft.com/devcontainers/java",
+    "image": "mcr.microsoft.com/devcontainers/java",
     "initializeCommand": "docker pull mcr.microsoft.com/devcontainers/java",
     "features": {
+        "ghcr.io/devcontainers/features/git-lfs:1": {},
         "ghcr.io/devcontainers/features/java:1": {
             "version": "none",
             "installMaven": "true",
@@ -19,6 +20,7 @@
                 "telemetry.enableTelemetry": false
             },
             "extensions": [
+                "EditorConfig.EditorConfig",
                 "vscjava.vscode-java-pack"
             ]
         }

@@ -13,7 +13,7 @@ It is important to highlight that this plugin is provided on an 'as-is' basis, w
 ## Features
 
 * makes use of several headers sent by OAuth2 proxy (depending on its configuration)
-  * see constants in [OAuth2ProxyHeaderAuthTokenFactory](src/main/java/com/github/tumbl3w33d/OAuth2ProxyHeaderAuthTokenFactory.java)
+  * see constants in [OAuth2ProxyHeaderAuthTokenFactory](../src/main/java/com/github/tumbl3w33d/OAuth2ProxyHeaderAuthTokenFactory.java)
   * creates an AuthenticationToken used by Nexus
 * creates a user in a dedicated database table (i.e., not where Nexus checks for 'Local' users) if none with the given id (`preferred_username`) exists
   * anyone authenticated with your identity provider can access Nexus
@@ -58,7 +58,7 @@ For non-interactive programmatic access you circumvent the OAuth2 Proxy and go s
 
 ## Example with HAProxy as entrypoint
 
-```
+```apacheconf
 # the entrypoint to your nexus + oauth2 proxy setup
 frontend you-name-it
   # just illustrating that you must ensure TLS
@@ -92,53 +92,53 @@ backend nexus
 
 ## Example with Nginx as entrypoint
 
-```
+```apacheconf
 ...
 ...
 # The block server only
-    server {
-        listen 443 ssl;
-        server_name your_nexus_host;
+server {
+    listen 443 ssl;
+    server_name your_nexus_host;
 
-        proxy_headers_hash_bucket_size 128;
+    proxy_headers_hash_bucket_size 128;
 
-        ssl_certificate /etc/nginx/certs/server-tls.crt;
-        ssl_certificate_key /etc/nginx/certs/user.key;
+    ssl_certificate /etc/nginx/certs/server-tls.crt;
+    ssl_certificate_key /etc/nginx/certs/user.key;
 
-        
-        location / {
-            # Clear existing headers that will be added upstream by oauth2-proxy (Optional, depends on your config)
-            proxy_set_header X-Forwarded-Email "";
-            proxy_set_header X-Forwarded-Groups "";
-            proxy_set_header X-Forwarded-User "";
 
-            # Set proxy pass headers
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header Cookie $http_cookie;
+    location / {
+        # Clear existing headers that will be added upstream by oauth2-proxy (Optional, depends on your config)
+        proxy_set_header X-Forwarded-Email "";
+        proxy_set_header X-Forwarded-Groups "";
+        proxy_set_header X-Forwarded-User "";
 
-            proxy_pass http://oauth2-proxy:4180;
+        # Set proxy pass headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Cookie $http_cookie;
 
-            # Usually oauth2-proxy delivers the login screen with a 403 status code.
-            # Safari can't handle that so we intercept 403 errors and return 200 instead.
-            proxy_intercept_errors on;
-            error_page 403 =200 @change_status;
-        }
+        proxy_pass http://oauth2-proxy:4180;
 
-        location @change_status {
-            # proxy to the auth-proxy, but this time with status code 200
-            proxy_pass http://auth2-proxy:4180;
-        }
+        # Usually oauth2-proxy delivers the login screen with a 403 status code.
+        # Safari can't handle that so we intercept 403 errors and return 200 instead.
+        proxy_intercept_errors on;
+        error_page 403 =200 @change_status;
     }
+
+    location @change_status {
+        # proxy to the auth-proxy, but this time with status code 200
+        proxy_pass http://auth2-proxy:4180;
+    }
+}
 ...
-...    
+...
 ```
 
 ## Example OAuth2 Proxy config
 
-```
+```apacheconf
 reverse_proxy = true
 
 http_address = "0.0.0.0:4180"

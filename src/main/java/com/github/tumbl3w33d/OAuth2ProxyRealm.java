@@ -164,7 +164,7 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
             String userId = userWithPrincipals.getUser().getUserId();
 
             logger.trace("user {} (source {}) has roles {} before sync", userId,
-                            userWithPrincipals.getUser().getSource(),
+                    userWithPrincipals.getUser().getSource(),
                     userWithPrincipals.getUser().getRoles());
 
             if (oauth2Token.groups != null) {
@@ -251,7 +251,7 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
             logger.warn("deleted role {} from user {}", role.getRoleId(),
                     user.getUserId());
         }
-        
+
         try {
             userManager.updateUserGroups(user);
         } catch (UserNotFoundException e) {
