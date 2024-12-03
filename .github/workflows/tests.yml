@@ -1,0 +1,47 @@
+name: Test Java and Javascript code
+
+env:
+  JDK_VERSION: 17
+  NODEJS_VERSION: 18
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  yarn_test:
+    name: Run Javascript tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+
+      - name: Install Node.js dependencies
+        run: yarn install
+
+      - name: Run Node.js tests
+        run: yarn test
+
+  maven_test:
+    name: Run Java tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JDK_VERSION }}
+          distribution: "temurin"
+          cache: maven
+
+      - name: Run Maven tests
+        run: mvn clean test

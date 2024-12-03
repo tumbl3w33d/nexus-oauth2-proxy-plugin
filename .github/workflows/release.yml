@@ -1,0 +1,37 @@
+name: Tag-based release
+
+env:
+  JDK_VERSION: 17
+
+on:
+  create:
+    tags:
+      - "*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JDK_VERSION }}
+          distribution: "temurin"
+          cache: maven
+
+      - name: Build with Maven
+        run: |
+          mvn --batch-mode clean package -DskipTests -PbuildKar
+          mv $(ls target/nexus-oauth2-proxy-plugin-*-bundle.kar) target/nexus-oauth2-proxy-plugin.kar
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          files: target/nexus-oauth2-proxy-plugin.kar
+          name: Release ${{ github.ref_name }}
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
