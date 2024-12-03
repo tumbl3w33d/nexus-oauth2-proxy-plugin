@@ -3,12 +3,12 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "build": "webpack --config webpack.config.js",
-        "build-all": "webpack --config webpack.config.js",
-        "test": "jest --config src/frontend/test/jest.config.js",
-        "test-coverage": "jest --config src/frontend/test/jest.config.js --coverage",
-        "test-watch": "jest --config src/frontend/test/jest.config.js --watch",
-        "watch": "webpack --watch --config webpack.config.js"
+        "build": "webpack --config ./src/frontend/webpack.config.js",
+        "build-all": "webpack --config ./src/frontend/webpack.config.js",
+        "test": "jest",
+        "test-coverage": "jest --coverage",
+        "test-watch": "jest --watch",
+        "watch": "webpack --watch --config ./src/frontend/webpack.config.js"
     },
     "dependencies": {
         "@fortawesome/free-solid-svg-icons": "6",
@@ -30,5 +30,32 @@
         "terser-webpack-plugin": "5",
         "webpack": ">=5.94",
         "webpack-cli": "5"
+    },
+    "babel": {
+        "presets": [
+            "@babel/preset-react",
+            "@babel/preset-env"
+        ]
+    },
+    "jest": {
+        "clearMocks": true,
+        "coverageDirectory": "<rootDir>/target/frontend-coverage",
+        "coveragePathIgnorePatterns": [
+            "<rootDir>/node_modules/"
+        ],
+        "moduleFileExtensions": [
+            "js",
+            "jsx"
+        ],
+        "roots": [
+            "<rootDir>/src/frontend"
+        ],
+        "testEnvironment": "jsdom",
+        "testMatch": [
+            "**/?(*.)test.jsx"
+        ],
+        "transform": {
+            "^.+\\.jsx$": "babel-jest"
+        }
     }
 }
