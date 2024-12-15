@@ -12,6 +12,8 @@ import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
 
 public class OAuth2ProxyRole extends AbstractEntity implements Comparable<OAuth2ProxyRole>, Serializable, HasStringId {
 
+    private static final long serialVersionUID = 1230813656398236L;
+
     private String name;
 
     public String toString() {

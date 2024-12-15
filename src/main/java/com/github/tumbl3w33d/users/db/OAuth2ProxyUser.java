@@ -22,6 +22,7 @@ import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
 
 public class OAuth2ProxyUser extends AbstractEntity implements Comparable<OAuth2ProxyUser>, Serializable, HasStringId {
 
+    private static final long serialVersionUID = 982589242389412L;
     private static final Logger logger = LoggerFactory.getLogger(OAuth2ProxyUser.class.getName());
 
     private String preferred_username;

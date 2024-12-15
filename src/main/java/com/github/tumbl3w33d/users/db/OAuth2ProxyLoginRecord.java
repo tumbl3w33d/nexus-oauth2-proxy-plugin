@@ -9,6 +9,8 @@ import org.sonatype.nexus.common.entity.HasStringId;
 
 public class OAuth2ProxyLoginRecord extends AbstractEntity implements Serializable, HasStringId {
 
+    private static final long serialVersionUID = 2397868513451L;
+
     private String userId;
     private Timestamp lastLogin;
 
