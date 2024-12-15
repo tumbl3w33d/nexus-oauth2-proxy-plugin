@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JDK_VERSION }}
           distribution: "temurin"
@@ -24,7 +24,7 @@ jobs:
 
       - name: Build with Maven
         run: |
-          mvn --batch-mode clean package -DskipTests -PbuildKar
+          ./mvnw --batch-mode clean package -DskipTests -PbuildKar
           mv $(ls target/nexus-oauth2-proxy-plugin-*-bundle.kar) target/nexus-oauth2-proxy-plugin.kar
 
       - name: Release
