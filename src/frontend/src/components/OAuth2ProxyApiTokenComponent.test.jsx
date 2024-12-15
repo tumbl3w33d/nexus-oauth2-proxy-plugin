@@ -1,9 +1,9 @@
 import Axios from 'axios';
-import React, { act } from 'react';
+import React from 'react';
 import OAuth2ProxyApiTokenComponent from './OAuth2ProxyApiTokenComponent';
 
 import '@testing-library/jest-dom'
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 
 jest.mock('axios');
 
