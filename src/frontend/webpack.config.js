@@ -8,7 +8,7 @@ module.exports = {
     entry: './src/frontend/src',
     output: {
         filename: 'nexus-oauth2-proxy-bundle.js',
-        path: path.resolve(__dirname, 'target', 'classes', 'static')
+        path: path.resolve(__dirname, '..', '..', 'target', 'classes', 'static')
     },
     module: {
         rules: [
