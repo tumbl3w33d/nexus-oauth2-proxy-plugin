@@ -7,6 +7,7 @@ import org.sonatype.nexus.security.authc.HttpHeaderAuthenticationToken;
 
 public class OAuth2ProxyHeaderAuthToken implements HostAuthenticationToken {
 
+    private static final long serialVersionUID = 234235998981350L;
     private final Logger logger = LoggerFactory.getLogger(OAuth2ProxyHeaderAuthToken.class);
 
     HttpHeaderAuthenticationToken user;
