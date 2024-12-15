@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mvn -PbuildKar clean package
+./mvnw -PbuildKar clean package
