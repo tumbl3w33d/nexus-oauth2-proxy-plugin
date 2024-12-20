@@ -32,6 +32,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.eclipse.sisu.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserNotFoundException;
@@ -65,10 +66,9 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
     private PasswordService passwordService;
 
     @Inject
-    public OAuth2ProxyRealm(
-            @Named OAuth2ProxyUserManager userManager, @Named OAuth2ProxyRoleStore roleStore,
-            @Named OAuth2ProxyLoginRecordStore loginRecordStore,
-            @Named PasswordService passwordService) {
+    public OAuth2ProxyRealm(@Named OAuth2ProxyUserManager userManager, @Named OAuth2ProxyRoleStore roleStore,
+            @Named OAuth2ProxyLoginRecordStore loginRecordStore, @Named PasswordService passwordService,
+            EventManager eventManager, OAuth2ProxyLogoutHandler logoutHandler) {
         this.userManager = checkNotNull(userManager);
         this.roleStore = roleStore;
         this.loginRecordStore = loginRecordStore;
@@ -81,6 +81,8 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
         // authentication is provided by oauth2 proxy headers with every request
         setAuthenticationCachingEnabled(false);
         setAuthorizationCachingEnabled(false);
+        eventManager.register(logoutHandler);
+        logger.debug("Registered oauth2 proxy logout handler");
     }
 
     private boolean isApiTokenMatching(AuthenticationToken token) {
@@ -164,8 +166,7 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
             String userId = userWithPrincipals.getUser().getUserId();
 
             logger.trace("user {} (source {}) has roles {} before sync", userId,
-                    userWithPrincipals.getUser().getSource(),
-                    userWithPrincipals.getUser().getRoles());
+                    userWithPrincipals.getUser().getSource(), userWithPrincipals.getUser().getRoles());
 
             if (oauth2Token.groups != null) {
                 logger.trace("user {} has identity provider groups {}", userId, oauth2Token.groups);
@@ -176,8 +177,7 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
 
         if (userWithPrincipals.hasPrincipals()) {
             logger.debug("found principals for OAuth2 proxy user '{}': '{}' from realms '{}'", oauth2proxyUserId,
-                    userWithPrincipals.getPrincipals(),
-                    userWithPrincipals.getPrincipals().getRealmNames());
+                    userWithPrincipals.getPrincipals(), userWithPrincipals.getPrincipals().getRealmNames());
 
             recordLogin(oauth2proxyUserId);
 
@@ -230,26 +230,23 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
         for (RoleIdentifier role : user.getRoles()) {
             if (!role.getSource().equals(OAuth2ProxyUserManager.SOURCE)) {
                 // not touching roles assigned outside of this realm logic
-                logger.debug("group sync leaving {}'s role {} untouched", user.getUserId(),
-                        role.getRoleId(), role.getSource());
+                logger.debug("group sync leaving {}'s role {} untouched", user.getUserId(), role.getRoleId(),
+                        role.getSource());
                 continue;
             }
 
             if (!idpGroups.stream().anyMatch(idpGroup -> idpGroup.getRoleId().equals(role.getRoleId()))) {
-                logger.warn("marking role {} of user {} for deletion", role.getRoleId(),
-                        user.getUserId());
+                logger.warn("marking role {} of user {} for deletion", role.getRoleId(), user.getUserId());
                 rolesToDelete.add(role);
             } else {
-                logger.trace("user {} still has group for role {} in identity provider",
-                        user.getUserId(),
+                logger.trace("user {} still has group for role {} in identity provider", user.getUserId(),
                         role.getRoleId());
             }
         }
 
         for (RoleIdentifier role : rolesToDelete) {
             user.removeRole(role);
-            logger.warn("deleted role {} from user {}", role.getRoleId(),
-                    user.getUserId());
+            logger.warn("deleted role {} from user {}", role.getRoleId(), user.getUserId());
         }
 
         try {

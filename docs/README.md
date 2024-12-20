@@ -157,6 +157,7 @@ code_challenge_method = "S256" # PKCE, if your idp supports that
 client_id = "get the client id from your identity provider"
 client_secret = "get the secret from your identity provider"
 cookie_secret = "generate an individual cookie secret"
+backend_logout_url = "https://idm.example.com/consult/your/idp-documentation/for/logout-url?id_token_hint={id_token}"
 
 # we don't need to wait for people to press the button, just redirect
 skip_provider_button = true
