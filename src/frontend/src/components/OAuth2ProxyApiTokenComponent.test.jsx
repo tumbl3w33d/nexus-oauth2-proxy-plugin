@@ -3,7 +3,7 @@ import React from 'react';
 import OAuth2ProxyApiTokenComponent from './OAuth2ProxyApiTokenComponent';
 
 import '@testing-library/jest-dom'
-import { act, render } from '@testing-library/react';
+import { act, render, fireEvent } from '@testing-library/react';
 
 jest.mock('axios');
 
@@ -24,9 +24,23 @@ describe('OAuth2ProxyApiTokenComponent', () => {
         Axios.post.mockImplementationOnce(() => Promise.resolve({ data: 'foobar' }));
     });
 
-    it('calls post request once when rendered', async () => {
+    it('renders page without immediately re-generating the token', async () => {
+        const { findByText } = render(<OAuth2ProxyApiTokenComponent />);
+
+        const token = await findByText(/Your current API token is hidden/i);
+        expect(token).toBeInTheDocument();
+
+        const button = await findByText(/Regenerate Token/i);
+        expect(button).toBeInTheDocument();
+        
+        expect(Axios.post).toHaveBeenCalledTimes(0);
+    });
+
+    it('calls post request once when regenerate button is clicked', async () => {
         await act(async () => {
-            render(<OAuth2ProxyApiTokenComponent />);
+            const { findByText } = render(<OAuth2ProxyApiTokenComponent />);
+            const button = await findByText(/Regenerate Token/i);
+            fireEvent.click(button);
         });
 
         expect(Axios.post).toHaveBeenCalledTimes(1);
@@ -34,9 +48,13 @@ describe('OAuth2ProxyApiTokenComponent', () => {
     });
 
     it('renders response content as token', async () => {
-        const { findByText } = render(<OAuth2ProxyApiTokenComponent />);
-
-        const token = await findByText(/foobar/i);
-        expect(token).toBeInTheDocument();
+        await act(async () => {
+            const { findByText } = render(<OAuth2ProxyApiTokenComponent />);
+            const button = await findByText(/Regenerate Token/i);
+            fireEvent.click(button);
+            
+            const token = await findByText(/foobar/i);
+            expect(token).toBeInTheDocument();
+        });
     });
 });
