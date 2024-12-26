@@ -167,3 +167,7 @@ skip_provider_button = true
 ## Troubleshooting
 
 If you encounter authentication issues, you can activate logging for the plugin classes by creating a logger in the Nexus administration section (`Support -> Logging -> Create Logger`), e.g. for the top level package `com.github.tumbl3w33d`.
+
+## Use with Authentic
+
+A user of the plugin [successfully configured their Authentik installation](https://github.com/tumbl3w33d/nexus-oauth2-proxy-plugin/issues/25#issuecomment-2563165385) in place of OAuth2 Proxy. While this setup is not being tested during development, it will probably work fine.
