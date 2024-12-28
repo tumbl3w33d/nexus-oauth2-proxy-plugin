@@ -211,6 +211,7 @@ public class OAuth2ProxyUserManagerTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void testUpdateUser() {
         OAuth2ProxyUserStore userStore = Mockito.mock(OAuth2ProxyUserStore.class);
         User exampleUser = OAuth2ProxyUserManager.createUserObject("test.user",
