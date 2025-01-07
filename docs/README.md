@@ -22,6 +22,7 @@ It is important to highlight that this plugin is provided on an 'as-is' basis, w
 * group/scope to role sync
   * if you configure OAuth2 Proxy with the well-known `groups` claim, it will retrieve that information from the identity provider
   * the groups received in the related header will be stored in a dedicated database table and become available for the 'external role mapping' functionality
+  * ⚠️ note: [currently it is necessary](https://github.com/tumbl3w33d/nexus-oauth2-proxy-plugin/issues/26) to use this mapping mechanism because assigning Nexus' default roles to users created via plugin has no effect
 * automatic expiry of API tokens
   * there is a configurable task that lets API tokens expire, so another login by the user is necessary to renew it
   * as long as the user keeps showing up regularly, their token will not expire
