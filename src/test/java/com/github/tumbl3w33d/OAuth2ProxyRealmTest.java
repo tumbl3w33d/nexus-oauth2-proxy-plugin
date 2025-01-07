@@ -53,6 +53,7 @@ import com.github.tumbl3w33d.h2.OAuth2ProxyLoginRecordStore;
 import com.github.tumbl3w33d.h2.OAuth2ProxyRoleDAO;
 import com.github.tumbl3w33d.h2.OAuth2ProxyRoleStore;
 import com.github.tumbl3w33d.h2.OAuth2ProxyUserDAO;
+import com.github.tumbl3w33d.logout.OAuth2ProxyLogoutHandler;
 import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
 import com.github.tumbl3w33d.users.OAuth2ProxyUserManager.UserWithPrincipals;
 import com.github.tumbl3w33d.users.db.OAuth2ProxyLoginRecord;

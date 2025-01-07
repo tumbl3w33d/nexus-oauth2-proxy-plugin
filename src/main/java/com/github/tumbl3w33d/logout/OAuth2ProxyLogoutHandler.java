@@ -1,10 +1,11 @@
-package com.github.tumbl3w33d;
+package com.github.tumbl3w33d.logout;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.http.Cookie;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.security.authc.LogoutEvent;
 
+import com.github.tumbl3w33d.OAuth2ProxyRealm;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
@@ -35,19 +37,43 @@ public class OAuth2ProxyLogoutHandler {
 
     private final Logger logger = LoggerFactory.getLogger(OAuth2ProxyLogoutHandler.class);
 
+    private OAuth2ProxyLogoutCapabilityConfigurationState configState;
+
+    @Inject
+    public OAuth2ProxyLogoutHandler(OAuth2ProxyLogoutCapabilityConfigurationState configState) {
+        this.configState = configState;
+    }
+
     @AllowConcurrentEvents
     @Subscribe
     public void handle(final LogoutEvent event) {
         if (OAuth2ProxyRealm.NAME.equals(event.getRealm())) {
-            logger.debug("Triggering OAuth2 proxy logout for user " + event.getPrincipal());
-            URI logoutUrl = URI.create(joinUri(BaseUrlHolder.get(), "oauth2/sign_out"));
-            BasicCookieStore cookieStore = prepareCookieStore(logoutUrl);
-            try (CloseableHttpClient client = constructClient(cookieStore)) {
-                performOAuth2ProxyLogout(client, logoutUrl);
-                logger.info("User " + event.getPrincipal() + " was logged out from oauth2 proxy successfully");
-            } catch (IOException e) {
-                logger.error("Failed to logout from oauth2 proxy", e);
+            if (configState.getConfig() != null) {
+                logger.debug("Triggering OAuth2 proxy logout for user " + event.getPrincipal());
+                URI logoutUrl = URI.create(determineLogoutUrl(configState.getConfig()));
+                BasicCookieStore cookieStore = prepareCookieStore(logoutUrl);
+                try (CloseableHttpClient client = constructClient(cookieStore)) {
+                    performOAuth2ProxyLogout(client, logoutUrl);
+                    logger.info("User " + event.getPrincipal() + " was logged out from oauth2 proxy successfully");
+                } catch (IOException e) {
+                    logger.error("Failed to logout from oauth2 proxy: {}",
+                            e.getMessage() == null ? e.getClass() : e.getMessage());
+                    logger.debug("Failed to logout from oauth2 proxy", e);
+                }
+            } else {
+                logger.debug(
+                        "Logout from OAuth2 Proxy is disabled: enable the 'OAuth2 Proxy: Logout' capability to change this");
             }
+        }
+    }
+
+    private String determineLogoutUrl(OAuth2ProxyLogoutCapabilityConfiguration config) {
+        if (config.getLogoutUrl() != null && !config.getLogoutUrl().trim().isEmpty()) {
+            return config.getLogoutUrl();
+        } else {
+            String result = joinUri(BaseUrlHolder.get(), "oauth2/sign_out");
+            logger.debug("Logout URL configured in logout capability is empty: Using default: {}", result);
+            return result;
         }
     }
 
