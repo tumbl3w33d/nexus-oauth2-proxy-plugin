@@ -20,6 +20,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
 
+import com.github.tumbl3w33d.h2.OAuth2ProxyTokenInfoStore;
 import com.github.tumbl3w33d.h2.OAuth2ProxyUserStore;
 import com.github.tumbl3w33d.users.db.OAuth2ProxyUser;
 import com.google.common.collect.ImmutableSet;
@@ -119,7 +120,8 @@ public class OAuth2ProxyUserManagerTest {
         User exampleUser = OAuth2ProxyUserManager.createUserObject("test.user",
                 "test.user@example.com");
         Mockito.when(userStore.getUser(anyString())).thenReturn(Optional.of(exampleUser));
-        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore);
+        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore,
+                Mockito.mock(OAuth2ProxyTokenInfoStore.class));
 
         assertDoesNotThrow(() -> {
             User user = userManager.getUser(exampleUser.getUserId());
@@ -134,7 +136,8 @@ public class OAuth2ProxyUserManagerTest {
         User exampleUser = OAuth2ProxyUserManager.createUserObject("test.user",
                 "test.user@example.com");
         Mockito.when(userStore.getUser(anyString())).thenReturn(Optional.empty());
-        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore);
+        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore,
+                Mockito.mock(OAuth2ProxyTokenInfoStore.class));
 
         assertThrows(UserNotFoundException.class,
                 () -> userManager.getUser(exampleUser.getUserId()));
@@ -146,7 +149,8 @@ public class OAuth2ProxyUserManagerTest {
         User exampleUser = OAuth2ProxyUserManager.createUserObject("test.user",
                 "test.user@example.com");
         Mockito.when(userStore.getUser(anyString())).thenReturn(Optional.of(exampleUser));
-        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore);
+        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore,
+                Mockito.mock(OAuth2ProxyTokenInfoStore.class));
 
         assertDoesNotThrow(() -> {
             User user = userManager.getUser(exampleUser.getUserId(),
@@ -165,7 +169,8 @@ public class OAuth2ProxyUserManagerTest {
                 "test.user2@example.com");
         ImmutableSet<User> testUsers = ImmutableSet.of(exampleUser1, exampleUser2);
         Mockito.when(userStore.getAllUsers()).thenReturn(testUsers);
-        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore);
+        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore,
+                Mockito.mock(OAuth2ProxyTokenInfoStore.class));
 
         assertEquals(ImmutableSet.of("test.user1", "test.user2"),
                 userManager.listUserIds());
@@ -180,7 +185,8 @@ public class OAuth2ProxyUserManagerTest {
                 "test.user2@example.com");
         ImmutableSet<User> testUsers = ImmutableSet.of(exampleUser1, exampleUser2);
         Mockito.when(userStore.getAllUsers()).thenReturn(testUsers);
-        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore);
+        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore,
+                Mockito.mock(OAuth2ProxyTokenInfoStore.class));
 
         assertEquals(testUsers, userManager.listUsers());
     }
@@ -191,7 +197,8 @@ public class OAuth2ProxyUserManagerTest {
         User exampleUser = OAuth2ProxyUserManager.createUserObject("test.user",
                 "test.user@example.com");
         Mockito.when(userStore.getAllUsers()).thenReturn(ImmutableSet.of(exampleUser));
-        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore);
+        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore,
+                Mockito.mock(OAuth2ProxyTokenInfoStore.class));
 
         Set<User> searchResult = userManager.searchUsers(new UserSearchCriteria("test.user"));
         assertTrue(searchResult.size() == 1);
@@ -250,7 +257,8 @@ public class OAuth2ProxyUserManagerTest {
             userStore = Mockito.mock(OAuth2ProxyUserStore.class);
         }
 
-        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore);
+        OAuth2ProxyUserManager userManager = new OAuth2ProxyUserManager(userStore,
+                Mockito.mock(OAuth2ProxyTokenInfoStore.class));
         return userManager;
     }
 }

@@ -19,6 +19,7 @@ import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
 
 import com.github.tumbl3w33d.OAuth2ProxyRealm;
+import com.github.tumbl3w33d.h2.OAuth2ProxyTokenInfoStore;
 import com.github.tumbl3w33d.h2.OAuth2ProxyUserStore;
 import com.github.tumbl3w33d.users.db.OAuth2ProxyUser;
 
@@ -31,10 +32,13 @@ public class OAuth2ProxyUserManager extends AbstractUserManager {
     public static final String SOURCE = "OAuth2Proxy";
 
     private final OAuth2ProxyUserStore userStore;
+    private final OAuth2ProxyTokenInfoStore tokenInfoStore;
 
     @Inject
-    public OAuth2ProxyUserManager(final OAuth2ProxyUserStore userStore) {
+    public OAuth2ProxyUserManager(final OAuth2ProxyUserStore userStore,
+            @Named final OAuth2ProxyTokenInfoStore tokenInfoStore) {
         this.userStore = userStore;
+        this.tokenInfoStore = tokenInfoStore;
     }
 
     @Override
@@ -179,6 +183,7 @@ public class OAuth2ProxyUserManager extends AbstractUserManager {
 
         if (maybeUserToUpdate.isPresent()) {
             userStore.updateUserApiToken(userId, newPassword);
+            tokenInfoStore.updateTokenInfo(userId);
         } else {
             log.warn("could not retrieve user {} for changing password", userId);
         }

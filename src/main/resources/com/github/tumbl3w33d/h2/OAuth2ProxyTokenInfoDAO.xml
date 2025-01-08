@@ -1,0 +1,49 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.tumbl3w33d.h2.OAuth2ProxyTokenInfoDAO">
+
+    <resultMap id="OAuth2ProxyTokenInfoMap" type="com.github.tumbl3w33d.users.db.OAuth2ProxyTokenInfo">
+        <id property="userId" column="userId"/>
+        <result property="tokenCreation" column="tokenCreation"/>
+    </resultMap>
+
+    <update id="createSchema">
+        CREATE TABLE IF NOT EXISTS oauth2_proxy_token_info (
+            userId VARCHAR(255) NOT NULL,
+            tokenCreation TIMESTAMP NOT NULL,
+            PRIMARY KEY (userId)
+        );
+
+        -- Seed this table by assuming the last login was when the token was created. While not correct, this is better than nothing        
+        INSERT INTO oauth2_proxy_token_info (userId, tokenCreation)
+        SELECT userId, lastLogin FROM oauth2_proxy_login_record;
+        
+    </update>
+
+    <insert id="create" parameterType="com.github.tumbl3w33d.users.db.OAuth2ProxyTokenInfo">
+        INSERT INTO oauth2_proxy_token_info (userId, tokenCreation)
+        VALUES (#{userId, jdbcType=VARCHAR}, #{tokenCreation, jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="update" parameterType="com.github.tumbl3w33d.users.db.OAuth2ProxyTokenInfo">
+        UPDATE oauth2_proxy_token_info
+        SET tokenCreation = #{tokenCreation, jdbcType=TIMESTAMP}
+        WHERE userId = #{userId, jdbcType=VARCHAR}
+    </update>
+
+    <select id="read" resultMap="OAuth2ProxyTokenInfoMap">
+        SELECT userId, tokenCreation
+        FROM oauth2_proxy_token_info
+        WHERE userId = #{userId}
+    </select>
+
+    <delete id="delete" parameterType="String">
+        DELETE FROM oauth2_proxy_token_info
+        WHERE userId = #{userId}
+    </delete>
+
+    <select id="browse" resultMap="OAuth2ProxyTokenInfoMap">
+        SELECT userId, tokenCreation
+        FROM oauth2_proxy_token_info
+    </select>
+
+</mapper>
