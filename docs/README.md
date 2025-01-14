@@ -24,8 +24,12 @@ It is important to highlight that this plugin is provided on an 'as-is' basis, w
   * the groups received in the related header will be stored in a dedicated database table and become available for the 'external role mapping' functionality
   * ⚠️ note: [currently it is necessary](https://github.com/tumbl3w33d/nexus-oauth2-proxy-plugin/issues/26) to use this mapping mechanism because assigning Nexus' default roles to users created via plugin has no effect
 * automatic expiry of API tokens
-  * there is a configurable task that lets API tokens expire, so another login by the user is necessary to renew it
-  * as long as the user keeps showing up regularly, their token will not expire
+  * there is a configurable task that lets API tokens expire, so another login and manual renewal by the user is necessary
+  * by default, the token will expire after 30 days of inactivity. As long as the user keeps showing up regularly, their token will not expire
+  * The expiration can be configured as a regular nexus task. You can:
+    * adjust inactivity period that leads to token invalidation
+    * enable and set max token age, meaning the token automatically expires after a certain time, regardless of activity
+    * enable mail notifications on token expiry (requires having a mail server configured in Nexus to work)
 * backchannel logout in IDP via oauth2 proxy (if supported) when the logout is performed in Nexus
   * make sure to enable the OAuth2 Proxy: Logout capability in Nexus to make this work
 
@@ -167,6 +171,14 @@ skip_provider_button = true
 ```
 
 **Note**: Depending on the amount of data the OAuth2 Proxy receives from your IDP (especially list of groups) you might want to look into [changing its session storage to redis/valkey](https://oauth2-proxy.github.io/oauth2-proxy/configuration/session_storage/#redis-storage). The proxy will warn you about data exceeding limits which results in multiple cookies being set for the proxy session.
+
+## Optional: Bearer token authentication and token rotation
+
+If for some reason you need to use a Bearer token for machine-to-machine communcation or in general accessing Nexus programmatically e.g. because corporate guidelines prevent you from using Basic Auth using the api token, it is possible to set this up: 
+
+Add 'skip_jwt_bearer_tokens = true' to your OAuth2 Proxy configuration. This flag makes OAuth2 Proxy optionally accept Bearer tokens instead of performing the auth flow itself as long as the Bearer token is valid and the audience matches the configured client id. For details, check the [official documentation](https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview/). OAuth2 Proxy will then populate the x-forwarded headers based on information from this token, so for Nexus the login mechanism is still transparent.
+
+Leveraging this way of authenticating it is possible to create an automatic token rotation even if the API token is invalidated by obtaining the Bearer token via some kind of OIDC login and then using it to perform an authenticated REST call  against https://your_nexus_host/service/rest/oauth2-proxy/user/reset-token to obtain a new API token. Keep in mind that this REST call immediately invalidates the old token! Also make sure your reverse proxy is configured to route this URL to Nexus via OAuth2 Proxy (if you use the above example configs, this should automatically be the case)
 
 ## Troubleshooting
 

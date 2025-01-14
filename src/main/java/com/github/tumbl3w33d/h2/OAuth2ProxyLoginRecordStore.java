@@ -2,8 +2,10 @@ package com.github.tumbl3w33d.h2;
 
 import static com.github.tumbl3w33d.h2.OAuth2ProxyStores.loginRecordDAO;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -18,7 +20,6 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.github.tumbl3w33d.users.db.OAuth2ProxyLoginRecord;
-import com.google.common.collect.ImmutableSet;
 
 @Named("mybatis")
 @Singleton
@@ -28,8 +29,7 @@ public class OAuth2ProxyLoginRecordStore extends StateGuardLifecycleSupport
     private final DataSessionSupplier sessionSupplier;
 
     @Inject
-    public OAuth2ProxyLoginRecordStore(
-            final DataSessionSupplier sessionSupplier) {
+    public OAuth2ProxyLoginRecordStore(final DataSessionSupplier sessionSupplier) {
         this.sessionSupplier = sessionSupplier;
     }
 
@@ -39,11 +39,9 @@ public class OAuth2ProxyLoginRecordStore extends StateGuardLifecycleSupport
     }
 
     @Transactional
-    public Set<OAuth2ProxyLoginRecord> getAllLoginRecords() {
-        Set<OAuth2ProxyLoginRecord> allRecords = StreamSupport.stream(loginRecordDAO().browse().spliterator(), false)
-                .collect(Collectors.toSet());
-
-        return ImmutableSet.copyOf(allRecords);
+    public Map<String, OAuth2ProxyLoginRecord> getAllLoginRecords() {
+        return Collections.unmodifiableMap(StreamSupport.stream(loginRecordDAO().browse().spliterator(), false)
+                .collect(Collectors.toMap(OAuth2ProxyLoginRecord::getId, Function.identity())));
     }
 
     @Transactional
@@ -51,7 +49,7 @@ public class OAuth2ProxyLoginRecordStore extends StateGuardLifecycleSupport
         log.trace("call to getLoginRecord with userId {}", userId);
 
         try {
-            return OAuth2ProxyStores.loginRecordDAO().read(userId);
+            return loginRecordDAO().read(userId);
         } catch (Exception e) {
             log.error("unable to retrieve login record for {} - {}", userId, e);
             throw e;

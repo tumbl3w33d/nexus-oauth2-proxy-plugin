@@ -32,4 +32,8 @@ public class OAuth2ProxyStores {
     public static OAuth2ProxyLoginRecordDAO loginRecordDAO() {
         return dao(OAuth2ProxyLoginRecordDAO.class);
     }
+
+    public static OAuth2ProxyTokenInfoDAO tokenInfoDAO() {
+        return dao(OAuth2ProxyTokenInfoDAO.class);
+    }
 }
