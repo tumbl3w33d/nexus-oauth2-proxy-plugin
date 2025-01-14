@@ -26,8 +26,10 @@ It is important to highlight that this plugin is provided on an 'as-is' basis, w
 * automatic expiry of API tokens
   * there is a configurable task that lets API tokens expire, so another login by the user is necessary to renew it
   * as long as the user keeps showing up regularly, their token will not expire
+* backchannel logout in IDP via oauth2 proxy (if supported) when the logout is performed in Nexus
+  * make sure to enable the OAuth2 Proxy: Logout capability in Nexus to make this work
 
-**Note**: After authenticating with this realm, the logout button is non-operative, which is a common limitation with header-based authentication methods. To force a logout, you need to logout from your identity provider and/or delete the OAuth2 Proxy cookie if you must logout for some reason.
+**Note**: If the OAuth2 Proxy: Logout capability is not enabled, the logout button is non-operative, which is a common limitation with header-based authentication methods. To force a logout, you need to logout from your identity provider and/or delete the OAuth2 Proxy cookie if you must logout for some reason.
 
 ## Supported Nexus version
 
@@ -158,6 +160,7 @@ code_challenge_method = "S256" # PKCE, if your idp supports that
 client_id = "get the client id from your identity provider"
 client_secret = "get the secret from your identity provider"
 cookie_secret = "generate an individual cookie secret"
+backend_logout_url = "https://idm.example.com/consult/your/idp-documentation/for/logout-url?id_token_hint={id_token}"
 
 # we don't need to wait for people to press the button, just redirect
 skip_provider_button = true

@@ -28,15 +28,32 @@ public class OAuth2ProxyHeaderAuthTokenFactoryTest {
     @Test
     void testCreateToken() {
         OAuth2ProxyHeaderAuthTokenFactory factory = new OAuth2ProxyHeaderAuthTokenFactory();
-
         HttpServletRequest request = createMockRequestViaProxy(false);
-
         ServletResponse response = Mockito.mock(ServletResponse.class);
 
         AuthenticationToken token = factory.createToken(request, response);
         assertNotNull(token);
         assertDoesNotThrow(() -> (OAuth2ProxyHeaderAuthToken) token);
         OAuth2ProxyHeaderAuthToken proxyToken = (OAuth2ProxyHeaderAuthToken) token;
+        assertToken(proxyToken);
+
+        // programmatic access - accept requests with Authorization header AND complete oauth2 proxy headers
+        // this allows oauth2 proxy's --skip-jwt-bearer-tokens option to be used for realising alternative oidc login flows
+        // e.g. obtaining an access token via device flow, then using it to login to nexus without having to deal with redirects
+        // in this case oauth2 proxy validates the token, populates all headers, but also forwards the Authorization header 
+        Mockito.when(request.getHeader("Authorization")).thenReturn("Basic foo123==");
+        assertNotNull(token);
+        assertDoesNotThrow(() -> (OAuth2ProxyHeaderAuthToken) token);
+        proxyToken = (OAuth2ProxyHeaderAuthToken) token;
+        assertToken(proxyToken);
+
+        // programmatic access - reject requests with Authorization header but with incomplete oauth2 proxy headers
+        Mockito.when(request.getHeader("Authorization")).thenReturn("Basic foo123==");
+        Mockito.when(request.getHeader(OAuth2ProxyHeaderAuthTokenFactory.X_FORWARDED_USER)).thenReturn(null);
+        assertNull(factory.createToken(request, response));
+    }
+
+    private static void assertToken(OAuth2ProxyHeaderAuthToken proxyToken) {
         assertEquals(username, proxyToken.getPrincipal());
         assertNull(proxyToken.getCredentials());
         assertEquals(userUuid, proxyToken.user.getHeaderValue());
@@ -45,27 +62,17 @@ public class OAuth2ProxyHeaderAuthTokenFactoryTest {
         assertEquals(groups, proxyToken.groups.getHeaderValue());
         assertEquals(host, proxyToken.getHost());
         assertNull(proxyToken.accessToken);
-
-        // programmatic access - reject requests with Authorization header
-
-        Mockito.when(request.getHeader("Authorization")).thenReturn("Basic foo123==");
-
-        assertNull(factory.createToken(request, response));
     }
 
     static HttpServletRequest createMockRequestViaProxy(boolean fakeMissingHeader) {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
-        Mockito.when(request.getHeader(OAuth2ProxyHeaderAuthTokenFactory.X_FORWARDED_USER))
-                .thenReturn(userUuid);
+        Mockito.when(request.getHeader(OAuth2ProxyHeaderAuthTokenFactory.X_FORWARDED_USER)).thenReturn(userUuid);
         if (!fakeMissingHeader) {
-            Mockito.when(request
-                    .getHeader(OAuth2ProxyHeaderAuthTokenFactory.X_FORWARDED_PREFERRED_USERNAME))
+            Mockito.when(request.getHeader(OAuth2ProxyHeaderAuthTokenFactory.X_FORWARDED_PREFERRED_USERNAME))
                     .thenReturn(username);
         }
-        Mockito.when(request.getHeader(OAuth2ProxyHeaderAuthTokenFactory.X_FORWARDED_EMAIL))
-                .thenReturn(mail);
-        Mockito.when(request.getHeader(OAuth2ProxyHeaderAuthTokenFactory.X_FORWARDED_GROUPS))
-                .thenReturn(groups);
+        Mockito.when(request.getHeader(OAuth2ProxyHeaderAuthTokenFactory.X_FORWARDED_EMAIL)).thenReturn(mail);
+        Mockito.when(request.getHeader(OAuth2ProxyHeaderAuthTokenFactory.X_FORWARDED_GROUPS)).thenReturn(groups);
         Mockito.when(request.getRemoteHost()).thenReturn(host);
         return request;
     }

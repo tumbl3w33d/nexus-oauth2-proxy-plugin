@@ -38,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.security.authc.HttpHeaderAuthenticationToken;
 import org.sonatype.nexus.security.internal.DefaultSecurityPasswordService;
@@ -52,6 +53,7 @@ import com.github.tumbl3w33d.h2.OAuth2ProxyLoginRecordStore;
 import com.github.tumbl3w33d.h2.OAuth2ProxyRoleDAO;
 import com.github.tumbl3w33d.h2.OAuth2ProxyRoleStore;
 import com.github.tumbl3w33d.h2.OAuth2ProxyUserDAO;
+import com.github.tumbl3w33d.logout.OAuth2ProxyLogoutHandler;
 import com.github.tumbl3w33d.users.OAuth2ProxyUserManager;
 import com.github.tumbl3w33d.users.OAuth2ProxyUserManager.UserWithPrincipals;
 import com.github.tumbl3w33d.users.db.OAuth2ProxyLoginRecord;
@@ -138,8 +140,8 @@ public class OAuth2ProxyRealmTest {
     }
 
     /*
-     * Make sure there was a call to user creation in case no user
-     * for the provided proxy headers exists yet.
+     * Make sure there was a call to user creation in case no user for the provided
+     * proxy headers exists yet.
      */
     private void testInteractiveAccessNewUser() {
         OAuth2ProxyUserManager userManager = Mockito.mock(OAuth2ProxyUserManager.class);
@@ -170,8 +172,7 @@ public class OAuth2ProxyRealmTest {
 
         OAuth2ProxyHeaderAuthToken token = createTestOAuth2ProxyHeaderAuthToken();
 
-        User existingUser = OAuth2ProxyUserManager.createUserObject("test.user",
-                "test.user@example.com");
+        User existingUser = OAuth2ProxyUserManager.createUserObject("test.user", "test.user@example.com");
 
         try {
             Mockito.when(userManager.getUser("test.user")).thenReturn(existingUser);
@@ -203,8 +204,7 @@ public class OAuth2ProxyRealmTest {
         String hashedPassword = "$shiro1$SHA-512$1024$tz9GiwuH8w6FVj0kz+tEEQ==$DocY8XBn+cySKW6u3ZXy6fKnjpYJpFoTeqe9W8VFYmzdR0y6oFZu40faVDe6Clnb+vrpElRQhXDoVmnESLNa2A==";
         Mockito.when(userManager.getApiToken(anyString())).thenReturn(Optional.of(hashedPassword));
 
-        UsernamePasswordToken upToken = new UsernamePasswordToken("test.user",
-                "secret123");
+        UsernamePasswordToken upToken = new UsernamePasswordToken("test.user", "secret123");
         AuthenticationInfo authInfo = oauth2ProxyRealm.doGetAuthenticationInfo(upToken);
         String primaryPrincipal = (String) authInfo.getPrincipals().getPrimaryPrincipal();
         assertNotNull(authInfo);
@@ -273,12 +273,10 @@ public class OAuth2ProxyRealmTest {
         OAuth2ProxyUserManager userManager = Mockito.mock(OAuth2ProxyUserManager.class);
         oauth2ProxyRealm = getTestRealm(userManager, roleStore);
 
-        User user = OAuth2ProxyUserManager.createUserObject("test.user",
-                "test.user@example.com");
+        User user = OAuth2ProxyUserManager.createUserObject("test.user", "test.user@example.com");
 
         // user had another idp group before
-        user.addRole(new RoleIdentifier(OAuth2ProxyUserManager.SOURCE,
-                "other@idm.example.com"));
+        user.addRole(new RoleIdentifier(OAuth2ProxyUserManager.SOURCE, "other@idm.example.com"));
         // and was assigned a group from default source
         user.addRole(new RoleIdentifier(UserManager.DEFAULT_SOURCE, "nx-big-boss"));
 
@@ -295,24 +293,18 @@ public class OAuth2ProxyRealmTest {
         verify(roleStore).addRolesIfMissing(roleCaptor.capture());
         Set<RoleIdentifier> capturedRoles = roleCaptor.getValue();
         Set<RoleIdentifier> testGroups = Stream.of(groups.split(","))
-                .map(group -> new RoleIdentifier(OAuth2ProxyUserManager.SOURCE,
-                        group))
-                .collect(Collectors.toSet());
+                .map(group -> new RoleIdentifier(OAuth2ProxyUserManager.SOURCE, group)).collect(Collectors.toSet());
         assertEquals(testGroups, capturedRoles);
 
-        assertTrue(user.getRoles().stream().anyMatch(
-                role -> role.getRoleId().equals("administrators@idm.example.com")));
-        assertTrue(user.getRoles().stream().anyMatch(
-                role -> role.getRoleId().equals("devs@idm.example.com")));
-        assertTrue(user.getRoles().stream().anyMatch(
-                role -> role.getRoleId().equals("nx-big-boss")),
+        assertTrue(
+                user.getRoles().stream().anyMatch(role -> role.getRoleId().equals("administrators@idm.example.com")));
+        assertTrue(user.getRoles().stream().anyMatch(role -> role.getRoleId().equals("devs@idm.example.com")));
+        assertTrue(user.getRoles().stream().anyMatch(role -> role.getRoleId().equals("nx-big-boss")),
                 "expected group sync to leave non-idp groups untouched");
-        assertFalse(user.getRoles().stream().anyMatch(
-                role -> role.getRoleId().equals("other@idm.example.com")));
+        assertFalse(user.getRoles().stream().anyMatch(role -> role.getRoleId().equals("other@idm.example.com")));
     }
 
-    private OAuth2ProxyRealm getTestRealm(OAuth2ProxyUserManager userManager,
-            OAuth2ProxyRoleStore roleStore) {
+    private OAuth2ProxyRealm getTestRealm(OAuth2ProxyUserManager userManager, OAuth2ProxyRoleStore roleStore) {
         PasswordService passwordService = new DefaultSecurityPasswordService(Mockito.mock(PasswordService.class));
 
         if (userManager == null) {
@@ -321,7 +313,8 @@ public class OAuth2ProxyRealmTest {
         if (roleStore == null) {
             roleStore = Mockito.mock(OAuth2ProxyRoleStore.class);
         }
-        OAuth2ProxyRealm realm = new OAuth2ProxyRealm(userManager, roleStore, loginRecordStore, passwordService);
+        OAuth2ProxyRealm realm = new OAuth2ProxyRealm(userManager, roleStore, loginRecordStore, passwordService,
+                Mockito.mock(EventManager.class), Mockito.mock(OAuth2ProxyLogoutHandler.class));
         return realm;
     }
 }
