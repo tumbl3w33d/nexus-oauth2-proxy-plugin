@@ -22,7 +22,6 @@
             FROM oauth2_proxy_token_info t
             WHERE t.userId = l.userId
         );
-        SELECT userId, lastLogin FROM oauth2_proxy_login_record;
     </update>
 
     <insert id="create" parameterType="com.github.tumbl3w33d.users.db.OAuth2ProxyTokenInfo">
