@@ -54,7 +54,7 @@ public class OAuth2ProxyApiTokenInvalidateTaskDescriptor extends TaskDescriptorS
 
     @Override
     public boolean allowConcurrentRun() {
-        return false;
+        return true;
     }
 
 }
