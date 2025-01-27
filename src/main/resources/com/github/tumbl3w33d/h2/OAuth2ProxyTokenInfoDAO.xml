@@ -13,10 +13,16 @@
             PRIMARY KEY (userId)
         );
 
-        -- Seed this table by assuming the last login was when the token was created. While not correct, this is better than nothing        
+        -- Seed this table by assuming the last login was when the token was created. While not correct, this is better than nothing
         INSERT INTO oauth2_proxy_token_info (userId, tokenCreation)
+        SELECT l.userId, l.lastLogin
+        FROM oauth2_proxy_login_record l
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM oauth2_proxy_token_info t
+            WHERE t.userId = l.userId
+        );
         SELECT userId, lastLogin FROM oauth2_proxy_login_record;
-        
     </update>
 
     <insert id="create" parameterType="com.github.tumbl3w33d.users.db.OAuth2ProxyTokenInfo">
