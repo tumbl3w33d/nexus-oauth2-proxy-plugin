@@ -237,7 +237,7 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
             }
 
             if (!idpGroups.stream().anyMatch(idpGroup -> idpGroup.getRoleId().equals(role.getRoleId()))) {
-                logger.warn("marking role {} of user {} for deletion", role.getRoleId(), user.getUserId());
+                logger.trace("marking role {} of user {} for deletion", role.getRoleId(), user.getUserId());
                 rolesToDelete.add(role);
             } else {
                 logger.trace("user {} still has group for role {} in identity provider", user.getUserId(),
@@ -247,7 +247,7 @@ public class OAuth2ProxyRealm extends AuthorizingRealm {
 
         for (RoleIdentifier role : rolesToDelete) {
             user.removeRole(role);
-            logger.warn("deleted role {} from user {}", role.getRoleId(), user.getUserId());
+            logger.info("deleted role {} from user {}", role.getRoleId(), user.getUserId());
         }
 
         try {
