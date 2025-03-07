@@ -23,24 +23,6 @@
         on their OIDC scopes.
     </description>
 
-    <!--
-        Because fof missing dependencies on Maven Central for latest nexus-plugins
-        see https://github.com/sonatype/nexus-public/issues/525
-    -->
-    <profiles>
-        <profile>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <pluginRepositories>
-                <pluginRepository>
-                    <id>groovy-plugins-release</id>
-                    <url>https://groovy.jfrog.io/artifactory/plugins-release</url>
-                </pluginRepository>
-            </pluginRepositories>
-        </profile>
-    </profiles>
-
     <build>
         <plugins>
             <plugin>
@@ -63,6 +45,13 @@
                     <source>17</source>
                     <target>17</target>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-eclipse-batch</artifactId>
+                        <version>LATEST</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>
