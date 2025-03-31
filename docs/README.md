@@ -1,3 +1,5 @@
+⚠️ Note: With 3.78 Sonatype [broke the loading of custom plugins](https://community.sonatype.com/t/custom-plugins-still-possible-starting-with-3-78/14589). Do not upgrade to that version or higher unless you have a solution for that problem. Unfortunately, there is nothing that can be done about it for now.
+
 # OpenID Connect for Sonatype Nexus Artifact Repository
 
 This plugin has been developed to facilitate the integration of Nexus with any identity provider that is compatible with [OAuth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy).
@@ -6,7 +8,7 @@ Rather than executing its own OIDC (OpenID Connect) authentication flow, this pl
 
 Furthermore, acknowledging the importance of non-interactive programmatic access within the Nexus environment, this plugin incorporates an API token feature. The plugin introduces an additional endpoint that allows authenticated users to reset their own API token to a system-generated one via the Nexus UI, with the caveat that this token is displayed solely once and is subject to reset with each access of this user menu item.
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 It is important to highlight that this plugin is provided on an 'as-is' basis, without any form of express or implied warranty. Under no circumstances shall the authors be held accountable for any damages or liabilities arising from the utilization of this plugin. Users are advised to proceed at their own risk.
 
@@ -36,6 +38,8 @@ It is important to highlight that this plugin is provided on an 'as-is' basis, w
 **Note**: If the OAuth2 Proxy: Logout capability is not enabled, the logout button is non-operative, which is a common limitation with header-based authentication methods. To force a logout, you need to logout from your identity provider and/or delete the OAuth2 Proxy cookie if you must logout for some reason.
 
 ## Supported Nexus version
+
+**Note**: See the warning on top of this document.
 
 This plugin moves along with the latest OSS version of Nexus.
 
