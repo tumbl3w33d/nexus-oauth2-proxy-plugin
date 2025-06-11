@@ -24,11 +24,11 @@ public class OAuth2ProxyHeaderAuthTokenFactory extends HttpHeaderAuthenticationT
 
     private final Logger logger = LoggerFactory.getLogger(OAuth2ProxyHeaderAuthTokenFactory.class);
 
-    static final String X_FORWARDED_USER = "X-Forwarded-User";
-    static final String X_FORWARDED_PREFERRED_USERNAME = "X-Forwarded-Preferred-Username";
-    static final String X_FORWARDED_EMAIL = "X-Forwarded-Email";
-    static final String X_FORWARDED_ACCESS_TOKEN = "X-Forwarded-Access-Token";
-    static final String X_FORWARDED_GROUPS = "X-Forwarded-Groups";
+    static final String X_FORWARDED_USER = System.getenv().getOrDefault("OAUTH2_PROXY_HEADER_USER", "X-Forwarded-User");
+    static final String X_FORWARDED_PREFERRED_USERNAME = System.getenv().getOrDefault("OAUTH2_PROXY_HEADER_PREFERRED_USERNAME", "X-Forwarded-Preferred-Username");
+    static final String X_FORWARDED_EMAIL = System.getenv().getOrDefault("OAUTH2_PROXY_HEADER_EMAIL", "X-Forwarded-Email");
+    static final String X_FORWARDED_ACCESS_TOKEN = System.getenv().getOrDefault("OAUTH2_PROXY_HEADER_ACCESS_TOKEN", "X-Forwarded-Access-Token");
+    static final String X_FORWARDED_GROUPS = System.getenv().getOrDefault("OAUTH2_PROXY_HEADER_GROUPS", "X-Forwarded-Groups");
 
     static final List<String> OAUTH2_PROXY_HEADERS = Collections.unmodifiableList(Arrays.asList(X_FORWARDED_USER,
             X_FORWARDED_PREFERRED_USERNAME, X_FORWARDED_EMAIL, X_FORWARDED_ACCESS_TOKEN, X_FORWARDED_GROUPS));
