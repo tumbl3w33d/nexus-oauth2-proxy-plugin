@@ -131,27 +131,39 @@ public class OAuth2ProxyUser extends AbstractEntity implements Comparable<OAuth2
 
     private static Optional<String[]> getNameParts(String preferredUsername) {
         String[] ret = new String[2];
-
-        if (preferredUsername == null) {
-            logger.debug("unable to extract name parts from null input as preferredUsername");
-            return Optional.empty();
+    
+        if (preferredUsername == null || preferredUsername.trim().isEmpty()) {
+            logger.debug("unable to extract name parts from null or empty input as preferredUsername");
+            ret[0] = "Unknown";
+            ret[1] = "Unknown";
+            return Optional.of(ret);
         }
 
-        // naive approach to figure out names from username
-        if (preferredUsername.contains(".")) {
-            String[] name_parts = preferredUsername.split("\\.");
-
-            try {
-                String assumed_firstname = name_parts[0].substring(0, 1).toUpperCase() + name_parts[0].substring(1);
-                ret[0] = assumed_firstname;
-                String assumed_lastname = name_parts[1].substring(0, 1).toUpperCase() + name_parts[1].substring(1);
-                ret[1] = assumed_lastname;
-                return Optional.of(ret);
-            } catch (IndexOutOfBoundsException e) {
-                logger.debug("preferred username in unexpected format - " + preferredUsername);
-            }
+        String localPart = preferredUsername.contains("@") 
+            ? preferredUsername.split("@")[0] 
+            : preferredUsername;
+    
+        String[] name_parts = localPart.split("\\.");
+    
+        if (name_parts.length == 0) {
+            logger.debug("preferred username in unexpected format (no name parts) - " + preferredUsername);
+            ret[0] = "Unknown";
+            ret[1] = "Unknown";
+        } else if (name_parts.length == 1) {
+            ret[0] = capitalize(name_parts[0]);
+            ret[1] = "Unknown";
+        } else {
+            ret[0] = capitalize(name_parts[0]);
+            ret[1] = capitalize(name_parts[name_parts.length - 1]);
         }
-        return Optional.empty();
+    
+        return Optional.of(ret);
+    }
+    
+    private static String capitalize(String s) {
+        return (s == null || s.isEmpty()) 
+            ? "Unknown" 
+            : s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
     }
 
     public String getGroupString() {
