@@ -129,7 +129,7 @@ public class OAuth2ProxyUser extends AbstractEntity implements Comparable<OAuth2
         return user;
     }
 
-    static Optional<String[]> getNameParts(String preferredUsername) {
+    public static Optional<String[]> getNameParts(String preferredUsername) {
         String[] ret = new String[2];
 
         if (preferredUsername == null || preferredUsername.trim().isEmpty()) {

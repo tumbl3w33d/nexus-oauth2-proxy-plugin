@@ -116,13 +116,11 @@ public class OAuth2ProxyUserManager extends AbstractUserManager {
         User newUser = new User();
         newUser.setUserId(preferred_username);
 
-        // naive approach to figure out names from username
-        if (preferred_username.contains(".")) {
-            String[] name_parts = preferred_username.split("\\.");
-            String assumed_firstname = name_parts[0].substring(0, 1).toUpperCase() + name_parts[0].substring(1);
-            newUser.setFirstName(assumed_firstname);
-            String assumed_lastname = name_parts[1].substring(0, 1).toUpperCase() + name_parts[1].substring(1);
-            newUser.setLastName(assumed_lastname);
+        Optional<String[]> maybeNameParts = OAuth2ProxyUser.getNameParts(preferred_username);
+        if (maybeNameParts.isPresent()) {
+            String[] nameParts = maybeNameParts.get();
+            newUser.setFirstName(nameParts[0]);
+            newUser.setLastName(nameParts[1]);
         }
 
         newUser.setEmailAddress(email);
